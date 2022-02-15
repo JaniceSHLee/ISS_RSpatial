@@ -1,0 +1,307 @@
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[R.app GUI 1.77 (8007) x86_64-apple-darwin17.0]
+
+Warning: namespace ‘XVector’ is not available and has been replaced
+by .GlobalEnv when processing object ‘S7seq’
+[Workspace restored from /Users/matthewwalker/.RData]
+[History restored from /Users/matthewwalker/.Rapp.history]
+
+> library(sf)
+Linking to GEOS 3.9.1, GDAL 3.4.0, PROJ 8.1.1; sf_use_s2() is TRUE
+> 
+> load(url("https://github.com/mgimond/Spatial/raw/main/Data/Sample1.RData"))
+> library(tmap) 
+> tm_shape(s.sf) + tm_polygons(col="grey", border.col="white")
+> tm_shape(s.sf) + tm_polygons(col="Income", border.col = "white")
+> tm_shape(s.sf) + tm_polygons("Income",  border.col = "white") + 
++   tm_legend(outside = TRUE)
+> tm_shape(s.sf) + 
++   tm_polygons("Income",  border.col = "white", legend.show=FALSE) +
++   tm_layout(frame = FALSE)
+> tm_shape(s.sf) + 
++   tm_polygons("Income", border.col = NULL) + 
++   tm_legend(outside = TRUE)
+> tm_shape(s.sf) + 
++   tm_polygons("Income", border.col = NULL) + 
++   tm_legend(outside = TRUE) +
++  tm_shape(rail.sf) + tm_lines(col="grey70") +
++  tm_shape(p.sf) + tm_dots(size=0.3, col="black") 
+> tm_shape(s.sf) + 
++   tm_polygons("Income", style = "quantile", n = 6, palette = "Greens") + 
++   tm_legend(outside = TRUE)
+> tm_shape(s.sf) + 
++   tm_polygons("Income", style = "fixed",palette = "Greens",
++               breaks = c(0, 23000, 27000, 100000 )) + 
++   tm_legend(outside = TRUE)
+> tm_shape(s.sf) + 
++   tm_polygons("Income", style = "fixed",palette = "Greens",
++               breaks = c(0, 23000, 27000, 100000 ),
++               labels = c("under $23,000", "$23,000 to $27,000", "above $27,000"),
++               text.size = 1) + 
++   tm_legend(outside = TRUE)
+> tm_shape(s.sf) + 
++   tm_polygons("NAME", palette = "Pastel1") + 
++   tm_legend(outside = TRUE)
+> tm_shape(s.sf) + 
++   tm_polygons("NoSchool", style="quantile", palette = "YlOrBr", n=8, 
++               title="Fraction without \na HS degree") + 
++   tm_legend(outside = TRUE)
+> tm_shape(s.sf) + 
++     tm_polygons("NAME", palette = "Pastel1", border.col = "white") + 
++   tm_legend(outside = TRUE) +
++   tm_shape(p.sf) +   
++     tm_dots(size=  .3, col = "red") +
++     tm_text("Name", just = "left", xmod = 0.5, size = 0.8)
+> tm_shape(s.sf) + 
++   tm_polygons("NAME", palette = "Pastel1") + 
++   tm_legend(outside = TRUE) +
++   tm_layout(outer.margins = c(.1,.1,.1,.1)) +
++   tm_grid(labels.inside.frame = FALSE,
++           n.x = 4, n.y = 5)
+> tm_shape(s.sf) + 
++   tm_polygons("NAME", palette = "Pastel1") + 
++   tm_legend(outside = TRUE) +
++   tm_layout(outer.margins = c(.1,.1,.1,.1)) +
++   tm_grid(labels.inside.frame = FALSE, 
++           x = c(-70.5, -69, -67.5),
++           y = c(44, 45, 46, 47),
++           projection = "EPSG:4326")
+> tm_shape(s.sf) + 
++   tm_polygons("NAME", palette = "Pastel1") + 
++   tm_legend(outside = TRUE) +
++   tm_layout(outer.margins = c(.1,.1,.1,.1)) +
++   tm_grid(labels.inside.frame = FALSE, 
++           x =  c(-70.5, -69, -67.5) ,
++           y = c(44, 45, 46, 47),
++           projection = "+proj=longlat",
++           labels.format = list(fun=function(x) {paste0(x,intToUtf8(176))} ) )
+> tm_shape(s.sf) + 
++   tm_polygons("NoSchool", palette = "YlOrBr", n = 6, 
++               legend.hist = TRUE, title = "% no school") + 
++   tm_legend(outside = TRUE, hist.width = 2) 
+> tm_shape(elev.r) + 
++   tm_raster(style = "cont", title = "Elevation (m)",
++             palette = terrain.colors(64))+
++   tm_legend(outside = TRUE)
+trying to read file: Elevation
+> tm_shape(elev.r) + 
++   tm_raster(style = "fixed", title = "Elevation (m)",
++             breaks = c(0, 50, 100, 500, 750, 1000, 15000),
++             palette = terrain.colors(5))+
++   tm_legend(outside = TRUE)
+trying to read file: Elevation
+> tm_shape(elev.r) + 
++   tm_raster(style = "quantile", n = 12, title = "Elevation (m)",
++             palette = colorRampPalette( c("darkolivegreen4","yellow", "brown"))(12),
++             legend.hist = TRUE)+
++   tm_legend(outside = TRUE, hist.width = 2)
+trying to read file: Elevation
+> # Define the Albers coordinate system
+> aea <-  "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +ellps=GRS80 +datum=NAD83"
+> 
+> # Map the data
+> tm_shape(elev.r, projection = aea) + 
++   tm_raster(style = "quantile", n = 12,
++             palette = colorRampPalette( c("darkolivegreen4","yellow", "brown"))(12),
++             legend.show = FALSE) +
++   tm_shape(rail.sf) + tm_lines(col = "grey70")+
++   tm_shape(p.sf) +tm_dots(size=0.5) +
++   tm_layout(outer.margins = c(.1,.1,.1,.1)) +
++   tm_grid(labels.inside.frame = FALSE, 
++           x = c(-70.5, -69, -67.5),
++           y = c(44, 45, 46, 47),
++           projection = "+proj=longlat")
+trying to read file: Elevation
+> inc.map <- tm_shape(s.sf) + tm_polygons(col="Income")+
++   tm_legend(outside=TRUE) 
+> school.map <- tm_shape(s.sf) + tm_polygons(col="NoSchool")+
++   tm_legend(outside=TRUE) 
+> name.map <- tm_shape(s.sf) + tm_polygons(col="NAME")+
++   tm_legend(outside=TRUE) 
+> 
+> tmap_arrange(inc.map, school.map, name.map)
+Legend labels were too wide. The labels have been resized to 0.56, 0.56, 0.56, 0.56, 0.56, 0.56, 0.56. Increase legend.width (argument of tm_layout) to make the legend wider and therefore the labels larger.
+Legend labels were too wide. The labels have been resized to 0.66, 0.66, 0.66, 0.66, 0.66, 0.66. Increase legend.width (argument of tm_layout) to make the legend wider and therefore the labels larger.
+> tm_shape(s.sf) + tm_polygons(col = "Income") +
++   tm_legend(outside = TRUE) +
++   tm_facets( by = "NAME", nrow = 2)
+library(ggplot2)
+ggplot(data = s.sf) + geom_sf()
+> library(ggplot2)
+> ggplot(data = s.sf) + geom_sf()
+> ggplot() + geom_sf(data = s.sf)
+> ggplot(data = s.sf) + geom_sf() + theme_void()
+> ggplot(data = s.sf) + geom_sf() + coord_sf(datum = NULL)
+> ggplot(data = s.sf) + geom_sf() + 
++    scale_x_continuous(breaks = c(-70, -69, -68)) +
++    scale_y_continuous(breaks = 44:47)
+> ggplot(data = s.sf) + geom_sf() + 
++    coord_sf(datum = NULL) +
++    scale_x_continuous(breaks = c(400000, 500000, 600000)) +
++    scale_y_continuous(breaks = c(4900000, 5100000))
+> ggplot(data = s.sf, aes(fill = Income)) + geom_sf() 
+> ggplot() + geom_sf(data = s.sf, aes(fill = Income)) 
+> ggplot(data = s.sf, aes(fill = Income)) + 
++   geom_sf(col = "white") 
+> ggplot(data = s.sf, aes(fill = Income)) + geom_sf() +
++   scale_fill_stepsn(colors = c("#D73027", "#FC8D59", "#FEE08B", 
++                                "#D9EF8B", "#91CF60") ,
++                     breaks = c(22000, 25000, 27000, 30000))
+> ggplot(data = s.sf, aes(fill = Income)) + geom_sf() +
++    scale_fill_fermenter(type = "div", palette = "PRGn", n.breaks = 4)
+> ggplot(data = s.sf, aes(fill = Income)) + geom_sf() +
++    scale_fill_fermenter(type = "div", palette = "PRGn", n.breaks = 4, direction = 1)
+> ggplot(data = s.sf, aes(fill = Income)) + geom_sf() +
++   scale_fill_stepsn(colors = c("#D73027", "#FC8D59", "#FEE08B", 
++                                "#D9EF8B", "#91CF60", "#1A9850") ,
++                     breaks = c(22000, 25000, 26000, 27000, 30000),
++                     values = scales::rescale(c(22000, 25000, 26000, 27000, 30000), c(0,1)),
++                     guide = guide_coloursteps(even.steps = FALSE,
++                                               show.limits = TRUE,
++                                               title = "Per capita Income \n(US dollars)",
++                                               barheight = unit(2.2, "in"),
++                                               barwidth = unit(0.15, "in"))) 
+> ggplot() + 
++   geom_sf(data = s.sf, aes(fill = Income)) +
++   geom_sf(data = rail.sf, col = "white") +
++   geom_sf(data = p.sf, col = "green")
+> library(raster) # Used to coerce raster to dataframe
+Loading required package: sp
+> 
+> ggplot() + 
++   geom_raster(data = as.data.frame(elev.r, xy=TRUE, na.rm = TRUE), 
++               aes(x = x, y = y, fill = elev)) +
++   scale_fill_gradientn(colours = terrain.colors(7)) +
++   geom_sf(data = rail.sf, col = "white") +
++   geom_sf(data = p.sf, col = "black") +
++   theme(axis.title = element_blank())  # Removes axes labels
+Warning message:
+Raster pixels are placed at uneven vertical intervals and will be shifted. Consider using geom_tile() instead. 
+> plot(s.sf)
+plot(s.sf["Income"])
+> plot(s.sf["Income"])
+> plot(s.sf["Income"])
+> plot(st_geometry(s.sf))
+> plot(st_geometry(s.sf), col ="grey", border = "white")
+> plot(st_geometry(s.sf), col ="grey", border = "white", graticule = TRUE, axes= TRUE)
+> plot(st_geometry(s.sf), col ="grey", border = "white", graticule = TRUE, axes= TRUE)
+> plot(rail.sf,  col = "grey20", add = TRUE)
+Warning message:
+In plot.sf(rail.sf, col = "grey20", add = TRUE) :
+  ignoring all but the first attribute
+plot(elev.r, col = terrain.colors(30))
+plot(st_geometry(rail.sf), col ="grey", border = "white", add = TRUE)
+> plot(elev.r, col = terrain.colors(30))
+> plot(st_geometry(rail.sf), col ="grey", border = "white", add = TRUE)
+OP <- par(las = 1, omi=c(0,0,0,0.6))
+p1 <- plot(s.sf["Income"], breaks = c(20000, 22000, 25000, 26000, 27000, 30000, 33000),
+     pal = c("#D73027", "#FC8D59", "#FEE08B", 
+             "#D9EF8B", "#91CF60", "#1A9850"),
+     key.width = 0.2,
+     at = c(20000, 22000, 25000, 26000, 27000, 30000, 33000))
+par(OP)
+> OP <- par(las = 1, omi=c(0,0,0,0.6))
+> p1 <- plot(s.sf["Income"], breaks = c(20000, 22000, 25000, 26000, 27000, 30000, 33000),
++      pal = c("#D73027", "#FC8D59", "#FEE08B", 
++              "#D9EF8B", "#91CF60", "#1A9850"),
++      key.width = 0.2,
++      at = c(20000, 22000, 25000, 26000, 27000, 30000, 33000))
+> par(OP)
+> OP <- par(las = 1, omi=c(0,0,0,0.6))
+> p1 <- plot(s.sf["Income"], breaks = c(20000, 22000, 25000, 26000, 27000, 30000, 33000),
++      pal = c("#D73027", "#FC8D59", "#FEE08B", 
++              "#D9EF8B", "#91CF60", "#1A9850"),
++      key.width = 0.2,
++      at = c(20000, 22000, 25000, 26000, 27000, 30000, 33000))
+> par(OP)
+> library(spdep)
+Loading required package: spData
+> library(classInt)
+> library(RColorBrewer)
+> library(rgdal)
+Please note that rgdal will be retired by the end of 2023,
+plan transition to sf/stars/terra functions using GDAL and PROJ
+at your earliest convenience.
+
+rgdal: version: 1.5-28, (SVN revision 1158)
+Geospatial Data Abstraction Library extensions to R successfully loaded
+Loaded GDAL runtime: GDAL 3.2.1, released 2020/12/29
+Path to GDAL shared files: /Library/Frameworks/R.framework/Versions/4.1/Resources/library/rgdal/gdal
+GDAL binary built with GEOS: TRUE 
+Loaded PROJ runtime: Rel. 7.2.1, January 1st, 2021, [PJ_VERSION: 721]
+Path to PROJ shared files: /Library/Frameworks/R.framework/Versions/4.1/Resources/library/rgdal/proj
+PROJ CDN enabled: FALSE
+Linking to sp version:1.4-6
+To mute warnings of possible GDAL/OSR exportToProj4() degradation,
+use options("rgdal_show_exportToProj4_warnings"="none") before loading sp or rgdal.
+Overwritten PROJ_LIB was /Library/Frameworks/R.framework/Versions/4.1/Resources/library/rgdal/proj
+> pal1 <- brewer.pal(6,"Greys")
+> pal2 <- brewer.pal(8,"RdYlGn")
+> pal3 <- c(brewer.pal(9,"Greys"), "#FF0000")
+> auckland <- readOGR(system.file("shapes/auckland.shp", package="spData")[1])
+OGR data source with driver: ESRI Shapefile 
+Source: "/Library/Frameworks/R.framework/Versions/4.1/Resources/library/spData/shapes/auckland.shp", layer: "auckland"
+with 167 features
+It has 4 fields
+> brks1 <- classIntervals(auckland$M77_85, n = 6, style = "equal")
+> brks2 <- classIntervals(auckland$M77_85, n = 6, style = "quantile")
+> print(spplot(auckland, "M77_85", at = brks1$brks, col.regions = pal1)
++       ,position=c(0,0,.5,1),more=T)
+> print(spplot(auckland, "M77_85", at = brks2$brks, col.regions = pal1)
++       ,position=c(0.5,0,1,1),more=T)
+> pop <- auckland$Und5_81 * 9
+> mor <- auckland$M77_85
+> auckland$raw.rate <- mor / pop * 1000
+> brks1 <- classIntervals(auckland$raw.rate, n = 6, style = "equal")
+> brks2 <- classIntervals(auckland$raw.rate, n = 6, style = "quantile")
+> print(spplot(auckland, "raw.rate", at = brks1$brks, col.regions = pal1)
++       ,position=c(0,0,.5,1),more=T)
+> print(spplot(auckland, "raw.rate", at = brks2$brks, col.regions = pal1)
++       ,position=c(0.5,0,1,1),more=T)
+> auck.rate <- sum(mor) / sum(pop)
+> mor.exp   <- pop * auck.rate  # Expected count over a nine year period
+> auckland$rel.rate <- 100 * mor / mor.exp
+> brks <- classIntervals(auckland$rel.rate, n = 6, style = "fixed", 
++                      fixedBreaks = c(0,47, 83, 118, 154, 190, 704))
+> spplot(auckland, "rel.rate", at = brks$brks,col.regions=pal1)
+> auckland$chi.squ = (mor - mor.exp) / sqrt(mor.exp)
+> brks <- classIntervals(auckland$chi.squ, n = 6, style = "fixed", 
++                       fixedBreaks = c(-5,-3, -1, -2, 0, 1, 2, 3, 5))
+> spplot(auckland, "chi.squ", at = brks$brks,col.regions=rev(pal2))
+> brks <- classIntervals(auckland$Und5_81, n = 6, style = "equal")
+> spplot(auckland, "Und5_81", at = brks$brks,col.regions=pal1)
+> EB.est         <- EBest(auckland$M77_85, auckland$Und5_81 * 9 )
+> auckland$EBest <- EB.est$estmm * 1000
+> brks1          <- classIntervals(auckland$EBest, n = 10, style = "quantile")
+> brks2          <- classIntervals(auckland$raw.rate, n = 10, style = "quantile")
+> print(spplot(auckland, "EBest", at = brks1$brks, col.regions = pal3, 
++              main="EB rates") ,position=c(0,0,.5,1),more=T)
+> print(spplot(auckland, "raw.rate", at = brks2$brks, col.regions = pal3, 
++              main="Raw Rates") ,position=c(0.5,0,1,1),more=T)
+> nb      <- poly2nb(auckland) 
+> EBL.est <- EBlocal(auckland$M77_85, 9*auckland$Und5_81, nb)
+> auckland$EBLest <- EBL.est$est * 1000
+> brks1           <- classIntervals(auckland$EBLest, n = 10, style = "quantile")
+> brks2           <- classIntervals(auckland$raw.rate, n = 10, style = "quantile")
+> print(spplot(auckland, "EBLest", at = brks1$brks, col.regions = pal3, 
++              main="Local EB rates") ,position=c(0,0,.5,1),more=T)
+> print(spplot(auckland, "raw.rate", at = brks2$brks, col.regions = pal3, 
++              main="Raw Rates") ,position=c(0.5,0,1,1),more=T)
+> 
