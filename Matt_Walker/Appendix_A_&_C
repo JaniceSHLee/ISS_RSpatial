@@ -1,0 +1,568 @@
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[R.app GUI 1.77 (8007) x86_64-apple-darwin17.0]
+
+Warning: namespace ‘XVector’ is not available and has been replaced
+by .GlobalEnv when processing object ‘S7seq’
+[Workspace restored from /Users/matthewwalker/.RData]
+[History restored from /Users/matthewwalker/.Rapp.history]
+
+> download.file("https://github.com/mgimond/Spatial/raw/main/Data/Income_schooling.zip", 
++               destfile = "Income_schooling.zip" , mode='wb')
+trying URL 'https://github.com/mgimond/Spatial/raw/main/Data/Income_schooling.zip'
+Content type 'application/zip' length 9236 bytes
+==================================================
+downloaded 9236 bytes
+
+> unzip("Income_schooling.zip", exdir = ".")
+> file.remove("Income_schooling.zip")
+[1] TRUE
+> download.file("https://github.com/mgimond/Spatial/raw/main/Data/rail_inters.gpkg", 
++               destfile = "./rail_inters.gpkg", mode='wb')
+trying URL 'https://github.com/mgimond/Spatial/raw/main/Data/rail_inters.gpkg'
+Content type 'application/octet-stream' length 851968 bytes (832 KB)
+==================================================
+downloaded 832 KB
+
+> download.file("https://github.com/mgimond/Spatial/raw/main/Data/elev.img",  
++               destfile = "./elev.img", mode='wb')               
+trying URL 'https://github.com/mgimond/Spatial/raw/main/Data/elev.img'
+Content type 'application/octet-stream' length 2893157 bytes (2.8 MB)
+==================================================
+downloaded 2.8 MB
+
+> library(sf)
+Linking to GEOS 3.9.1, GDAL 3.4.0, PROJ 8.1.1; sf_use_s2() is TRUE
+> s.sf <- st_read("Income_schooling.shp")
+Reading layer `Income_schooling' from data source `/Users/matthewwalker/Income_schooling.shp' using driver `ESRI Shapefile'
+Simple feature collection with 16 features and 5 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: 336337.7 ymin: 4772272 xmax: 660529.1 ymax: 5255569
+Projected CRS: NAD83 / UTM zone 19N
+> head(s.sf, n=4)  # List spatial object and the first 4 attribute records
+Simple feature collection with 4 features and 5 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: 379071.8 ymin: 4936182 xmax: 596500.1 ymax: 5255569
+Projected CRS: NAD83 / UTM zone 19N
+         NAME Income   NoSchool NoSchoolSE IncomeSE                       geometry
+1   Aroostook  21024 0.01338720 0.00140696  250.909 MULTIPOLYGON (((513821.1 51...
+2    Somerset  21025 0.00521153 0.00115002  390.909 MULTIPOLYGON (((379071.8 50...
+3 Piscataquis  21292 0.00633830 0.00212896  724.242 MULTIPOLYGON (((445039.5 51...
+4   Penobscot  23307 0.00684534 0.00102545  242.424 MULTIPOLYGON (((472271.3 49...
+> st_layers("rail_inters.gpkg")
+Driver: GPKG 
+Available layers:
+  layer_name     geometry_type features fields
+1 Interstate Multi Line String       35      1
+2       Rail Multi Line String      730      3
+> inter.sf <- st_read("rail_inters.gpkg", layer="Interstate")
+Reading layer `Interstate' from data source `/Users/matthewwalker/rail_inters.gpkg' using driver `GPKG'
+Simple feature collection with 35 features and 1 field
+Geometry type: MULTILINESTRING
+Dimension:     XY
+Bounding box:  xmin: -70.76643 ymin: 43.09272 xmax: -67.78126 ymax: 46.14542
+Geodetic CRS:  NAD83
+> rail.sf  <- st_read("rail_inters.gpkg", layer="Rail")
+Reading layer `Rail' from data source `/Users/matthewwalker/rail_inters.gpkg' using driver `GPKG'
+Simple feature collection with 730 features and 3 fields
+Geometry type: MULTILINESTRING
+Dimension:     XY
+Bounding box:  xmin: 339580.5 ymin: 4788824 xmax: 649601.1 ymax: 5245024
+Projected CRS: NAD83 / UTM zone 19N
+> library(raster)
+Loading required package: sp
+> elev.r <- raster("elev.img")
+> inMemory(elev.r)
+[1] FALSE
+> elev.r <- readAll(raster("elev.img"))
+> elev.r
+class      : RasterLayer 
+dimensions : 994, 652, 648088  (nrow, ncol, ncell)
+resolution : 500, 500  (x, y)
+extent     : 336630.3, 662630.3, 4759303, 5256303  (xmin, xmax, ymin, ymax)
+crs        : +proj=utm +zone=19 +datum=NAD83 +units=m +no_defs 
+source     : memory
+names      : elev 
+values     : 0, 1546  (min, max)
+
+> # Create a simple dataframe with lat/long values
+> df <- data.frame(lon = c(-68.783, -69.6458, -69.7653),
++                  lat = c(44.8109, 44.5521, 44.3235),
++                  Name= c("Bangor", "Waterville", "Augusta"))
+> 
+> # Convert the dataframe to a spatial object. Note that the
+> # crs= 4326 parameter assigns a WGS84 coordinate system to the 
+> # spatial object
+> p.sf <- st_as_sf(df, coords = c("lon", "lat"), crs = 4326) 
+> p.sf  
+Simple feature collection with 3 features and 1 field
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: -69.7653 ymin: 44.3235 xmax: -68.783 ymax: 44.8109
+Geodetic CRS:  WGS 84
+        Name                 geometry
+1     Bangor  POINT (-68.783 44.8109)
+2 Waterville POINT (-69.6458 44.5521)
+3    Augusta POINT (-69.7653 44.3235)
+> s.sp <- as(s.sf, "Spatial")
+> class(s.sp)
+[1] "SpatialPolygonsDataFrame"
+attr(,"package")
+[1] "sp"
+> library(maptools)
+Checking rgeos availability: FALSE
+Please note that 'maptools' will be retired by the end of 2023,
+plan transition at your earliest convenience;
+some functionality will be moved to 'sp'.
+ 	Note: when rgeos is not available, polygon geometry 	computations in maptools depend on gpclib,
+ 	which has a restricted licence. It is disabled by default;
+ 	to enable gpclib, type gpclibPermit()
+> s.owin <- as(s.sp, "owin")
+Registered S3 method overwritten by 'spatstat.geom':
+  method     from
+  print.boxx cli 
+> class(s.owin)
+[1] "owin"
+> p.sp  <- as(p.sf, "Spatial")  # Create Spatial* object
+> p.ppp <- as(p.sp, "ppp")      # Create ppp object
+Error in as.ppp.SpatialPointsDataFrame(from) : 
+  Only projected coordinates may be converted to spatstat class objects
+> p.sf.utm <- st_transform(p.sf, 32619) # project from geographic to UTM
+> p.sp  <- as(p.sf.utm, "Spatial")      # Create Spatial* object
+> p.ppp <- as(p.sp, "ppp")              # Create ppp object
+> class(p.ppp)
+[1] "ppp"
+> elev.im <- as.im.RasterLayer(elev.r) # From the maptools package
+> class(elev.im)
+[1] "im"
+> st_as_sf(p.ppp)  # For converting a ppp object to an sf object
+Simple feature collection with 4 features and 2 fields
+Geometry type: GEOMETRY
+Dimension:     XY
+Bounding box:  xmin: 438977.1 ymin: 4908089 xmax: 517159.1 ymax: 4961967
+CRS:           NA
+   spatstat.geom..marks.x.  label                           geom
+NA                    <NA> window POLYGON ((438977.1 4908089,...
+1                   Bangor  point       POINT (517159.1 4961967)
+2               Waterville  point       POINT (448706.1 4933399)
+3                  Augusta  point       POINT (438977.1 4908089)
+> st_as_sf(s.sp)   # For converting a Spatial* object to an sf object
+Simple feature collection with 16 features and 5 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: 336337.7 ymin: 4772272 xmax: 660529.1 ymax: 5255569
+Projected CRS: NAD83 / UTM zone 19N
+First 10 features:
+           NAME Income   NoSchool  NoSchoolSE IncomeSE                       geometry
+1     Aroostook  21024 0.01338720 0.001406960  250.909 MULTIPOLYGON (((513821.1 51...
+2      Somerset  21025 0.00521153 0.001150020  390.909 MULTIPOLYGON (((379071.8 50...
+3   Piscataquis  21292 0.00633830 0.002128960  724.242 MULTIPOLYGON (((445039.5 51...
+4     Penobscot  23307 0.00684534 0.001025450  242.424 MULTIPOLYGON (((472271.3 49...
+5    Washington  20015 0.00478188 0.000966036  327.273 MULTIPOLYGON (((645446.5 49...
+6      Franklin  21744 0.00508507 0.001641740  530.909 MULTIPOLYGON (((355457.9 50...
+7        Oxford  21885 0.00700822 0.001318160  536.970 MULTIPOLYGON (((339726.8 49...
+8         Waldo  23020 0.00498141 0.000918837  450.909 MULTIPOLYGON (((466941.8 49...
+9      Kennebec  25652 0.00570358 0.000917087  360.000 MULTIPOLYGON (((410590 4926...
+10 Androscoggin  24268 0.00830953 0.001178660  460.606 MULTIPOLYGON (((420086.1 48...
+> head(s.sf,3)
+Simple feature collection with 3 features and 5 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: 379071.8 ymin: 4936182 xmax: 596500.1 ymax: 5255569
+Projected CRS: NAD83 / UTM zone 19N
+         NAME Income   NoSchool NoSchoolSE IncomeSE                       geometry
+1   Aroostook  21024 0.01338720 0.00140696  250.909 MULTIPOLYGON (((513821.1 51...
+2    Somerset  21025 0.00521153 0.00115002  390.909 MULTIPOLYGON (((379071.8 50...
+3 Piscataquis  21292 0.00633830 0.00212896  724.242 MULTIPOLYGON (((445039.5 51...
+> st_crs(s.sf)
+Coordinate Reference System:
+  User input: NAD83 / UTM zone 19N 
+  wkt:
+PROJCRS["NAD83 / UTM zone 19N",
+    BASEGEOGCRS["NAD83",
+        DATUM["North American Datum 1983",
+            ELLIPSOID["GRS 1980",6378137,298.257222101,
+                LENGTHUNIT["metre",1]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433]],
+        ID["EPSG",4269]],
+    CONVERSION["UTM zone 19N",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["Degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",-69,
+            ANGLEUNIT["Degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",0.9996,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",500000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1]],
+    ID["EPSG",26919]]
+> Coordinate Reference System:
+Error: unexpected symbol in "Coordinate Reference"
+>   EPSG: 26919 
+Error: object 'EPSG' not found
+>   proj4string: "+proj=utm +zone=19 +datum=NAD83 +units=m +no_defs"
+Error in proj4string:"+proj=utm +zone=19 +datum=NAD83 +units=m +no_defs" : 
+  NA/NaN argument
+In addition: Warning message:
+NAs introduced by coercion 
+> s.df <- data.frame(s.sf)
+> class(s.df)
+[1] "data.frame"
+> head(s.df, 5)
+         NAME Income   NoSchool  NoSchoolSE IncomeSE                       geometry
+1   Aroostook  21024 0.01338720 0.001406960  250.909 MULTIPOLYGON (((513821.1 51...
+2    Somerset  21025 0.00521153 0.001150020  390.909 MULTIPOLYGON (((379071.8 50...
+3 Piscataquis  21292 0.00633830 0.002128960  724.242 MULTIPOLYGON (((445039.5 51...
+4   Penobscot  23307 0.00684534 0.001025450  242.424 MULTIPOLYGON (((472271.3 49...
+5  Washington  20015 0.00478188 0.000966036  327.273 MULTIPOLYGON (((645446.5 49...
+> str(s.df)
+'data.frame':	16 obs. of  6 variables:
+ $ NAME      : chr  "Aroostook" "Somerset" "Piscataquis" "Penobscot" ...
+ $ Income    : int  21024 21025 21292 23307 20015 21744 21885 23020 25652 24268 ...
+ $ NoSchool  : num  0.01339 0.00521 0.00634 0.00685 0.00478 ...
+ $ NoSchoolSE: num  0.001407 0.00115 0.002129 0.001025 0.000966 ...
+ $ IncomeSE  : num  251 391 724 242 327 ...
+ $ geometry  :sfc_MULTIPOLYGON of length 16; first list element: List of 1
+  ..$ :List of 1
+  .. ..$ : num [1:32, 1:2] 513821 513806 445039 422284 424687 ...
+  ..- attr(*, "class")= chr [1:3] "XY" "MULTIPOLYGON" "sfg"
+> s.nogeom.df <- st_set_geometry(s.sf, NULL) 
+> class(s.nogeom.df)
+[1] "data.frame"
+> head(s.nogeom.df, 5)
+         NAME Income   NoSchool  NoSchoolSE IncomeSE
+1   Aroostook  21024 0.01338720 0.001406960  250.909
+2    Somerset  21025 0.00521153 0.001150020  390.909
+3 Piscataquis  21292 0.00633830 0.002128960  724.242
+4   Penobscot  23307 0.00684534 0.001025450  242.424
+5  Washington  20015 0.00478188 0.000966036  327.273
+> st_write(s.sf, "shapefile_out.shp", driver="ESRI Shapefile")  # create to a shapefile 
+Writing layer `shapefile_out' to data source `shapefile_out.shp' using driver `ESRI Shapefile'
+Writing 16 features with 5 fields and geometry type Multi Polygon.
+> st_write(s.sf, " s.gpkg", driver="GPKG")  # Create a geopackage file
+Writing layer ` s' to data source ` s.gpkg' using driver `GPKG'
+Writing 16 features with 5 fields and geometry type Multi Polygon.
+> writeRaster(elev.r, "elev_out.tif", format="GTiff" ) # Create a geoTiff file
+> writeRaster(elev.r, "elev_out.img", format="HFA" )  # Create an Imagine raster file
+> library(sf)
+> p1.sfg <- st_point(c(-70, 45)) 
+> p2.sfg <- st_point(c(-69, 44)) 
+> p3.sfg <- st_point(c(-69, 45)) 
+> class(p1.sfg)
+[1] "XY"    "POINT" "sfg"  
+> p.sfc <- st_sfc( list(p1.sfg, p2.sfg, p3.sfg), crs = 4326 )
+> class(p.sfc)
+[1] "sfc_POINT" "sfc"      
+> p.sfc
+Geometry set for 3 features 
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 44 xmax: -69 ymax: 45
+Geodetic CRS:  WGS 84
+POINT (-70 45)
+POINT (-69 44)
+POINT (-69 45)
+> p.sfc[[2]]
+POINT (-69 44)
+> p.sf <- st_sf(p.sfc)
+> p.sf
+Simple feature collection with 3 features and 0 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 44 xmax: -69 ymax: 45
+Geodetic CRS:  WGS 84
+           p.sfc
+1 POINT (-70 45)
+2 POINT (-69 44)
+3 POINT (-69 45)
+> attributes(p.sf)
+$names
+[1] "p.sfc"
+
+$row.names
+[1] 1 2 3
+
+$class
+[1] "sf"         "data.frame"
+
+$sf_column
+[1] "p.sfc"
+
+$agr
+factor(0)
+Levels: constant aggregate identity
+
+> names(p.sf) <- "coords"
+> st_geometry(p.sf) <- "coords"
+> p.sf
+Simple feature collection with 3 features and 0 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 44 xmax: -69 ymax: 45
+Geodetic CRS:  WGS 84
+          coords
+1 POINT (-70 45)
+2 POINT (-69 44)
+3 POINT (-69 45)
+> typeof(p.sf$coords)
+[1] "list"
+> p.sf$val1 <- c("A", "B", "C")
+> p.sf
+Simple feature collection with 3 features and 1 field
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 44 xmax: -69 ymax: 45
+Geodetic CRS:  WGS 84
+          coords val1
+1 POINT (-70 45)    A
+2 POINT (-69 44)    B
+3 POINT (-69 45)    C
+> plot(p.sf, pch = 16, axes = TRUE, main = NULL)
+2022-02-16 00:08:06.932 R[56805:562576] +[NSSavePanel _warmUp] attempted warmup
+> df <- data.frame(col1 = c("A", "B","C"))
+> st_geometry(df) <- p.sfc
+> df
+Simple feature collection with 3 features and 1 field
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 44 xmax: -69 ymax: 45
+Geodetic CRS:  WGS 84
+  col1       geometry
+1    A POINT (-70 45)
+2    B POINT (-69 44)
+3    C POINT (-69 45)
+> l <- rbind( c(-70, 45), c(-69, 44), c(-69, 45) )
+> l.sfg <- st_linestring(l)
+> l.sfc <- st_sfc(list(l.sfg), crs = 4326)
+> l.sf <- st_sf(l.sfc)
+> l.sf
+Simple feature collection with 1 feature and 0 fields
+Geometry type: LINESTRING
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 44 xmax: -69 ymax: 45
+Geodetic CRS:  WGS 84
+                           l.sfc
+1 LINESTRING (-70 45, -69 44,...
+>  plot(l.sf, type = "b", pch = 16, main = NULL, axes = TRUE)
+> # Define coordinate pairs
+> l1 <- rbind( c(-70, 45), c(-69, 44), c(-69, 45) )
+> l2 <- rbind( c(-69, 44), c(-70, 44) )
+> l3 <- rbind( c(-69, 44), c(-68, 43) )
+> 
+> # Create simple feature geometry object
+> l.sfg <- st_multilinestring(list(l1, l2, l3))
+> 
+> # Create simple feature column object
+> l.sfc <- st_sfc(list(l.sfg), crs = 4326)
+> 
+> # Create simple feature object
+> l.sf <- st_sf(l.sfc)
+> 
+> # Plot the data
+> plot(l.sf, type = "b", pch = 16, axes = TRUE)
+> poly1.crd <- rbind( c(-66, 43), c(-70, 47), c(-70,43),  c(-66, 43) )
+> poly1.geom <- st_polygon( list(poly1.crd ) )
+> poly1.geom 
+POLYGON ((-66 43, -70 47, -70 43, -66 43))
+> poly.sfc <- st_sfc( list(poly1.geom), crs = 4326 )
+> poly.sf <- st_sf(poly.sfc)
+> poly.sf
+Simple feature collection with 1 feature and 0 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 43 xmax: -66 ymax: 47
+Geodetic CRS:  WGS 84
+                        poly.sfc
+1 POLYGON ((-66 43, -70 47, -...
+> names(poly.sf) <- "coords"
+> st_geometry(poly.sf) <- "coords"
+> poly.sf
+Simple feature collection with 1 feature and 0 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 43 xmax: -66 ymax: 47
+Geodetic CRS:  WGS 84
+                          coords
+1 POLYGON ((-66 43, -70 47, -...
+> plot(poly.sf, col = "bisque", axes = TRUE)
+> # Polygon 1
+> poly1.outer.crd <- rbind( c(-66, 43),c(-70, 47), c(-70,43), c(-66, 43) ) # Outer ring
+> poly1.inner.crd  <- rbind( c(-68, 44), c(-69,44), c(-69, 45), c(-68, 44) ) # Inner ring
+> poly1.geom <- st_polygon( list(poly1.outer.crd, poly1.inner.crd))
+> poly.sfc <- st_sfc( list(poly1.geom), crs = 4326 )
+> poly.sf <- st_sf(poly.sfc)
+> names(poly.sf) <- "coords"
+> st_geometry(poly.sf) <- "coords"
+> poly.sf
+Simple feature collection with 1 feature and 0 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 43 xmax: -66 ymax: 47
+Geodetic CRS:  WGS 84
+                          coords
+1 POLYGON ((-66 43, -70 47, -...
+> plot(poly.sf, col = "bisque", axes = TRUE)
+> # Define coordinate matrix
+> poly2.crd <- rbind( c(-67, 45),c(-67, 47), c(-69,47), c(-67, 45) ) 
+> 
+> # Create polygon geometry
+> poly2.geom <- st_polygon( list(poly2.crd))
+> poly.sfc <- st_sfc( list(poly1.geom , poly2.geom), crs = 4326 )
+> poly.sfc
+Geometry set for 2 features 
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 43 xmax: -66 ymax: 47
+Geodetic CRS:  WGS 84
+POLYGON ((-66 43, -70 47, -70 43, -66 43), (-68...
+POLYGON ((-67 45, -67 47, -69 47, -67 45))
+> poly.sf <- st_sf(poly.sfc)
+> poly.sf
+Simple feature collection with 2 features and 0 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 43 xmax: -66 ymax: 47
+Geodetic CRS:  WGS 84
+                        poly.sfc
+1 POLYGON ((-66 43, -70 47, -...
+2 POLYGON ((-67 45, -67 47, -...
+> names(poly.sf) <- "coords"
+> st_geometry(poly.sf) <- "coords"
+> poly.sf
+Simple feature collection with 2 features and 0 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 43 xmax: -66 ymax: 47
+Geodetic CRS:  WGS 84
+                          coords
+1 POLYGON ((-66 43, -70 47, -...
+2 POLYGON ((-67 45, -67 47, -...
+> plot(poly.sf, col = "bisque", axes = TRUE)
+> poly.sf$id <- c("A", "B")
+> poly.sf
+Simple feature collection with 2 features and 1 field
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 43 xmax: -66 ymax: 47
+Geodetic CRS:  WGS 84
+                          coords id
+1 POLYGON ((-66 43, -70 47, -...  A
+2 POLYGON ((-67 45, -67 47, -...  B
+> plot(poly.sf["id"],  axes = TRUE, main = NULL)
+> # Create multipolygon geometry
+> mpoly1.sfg  <- st_multipolygon( list(
++                                   list( poly1.outer.crd,  # Outer loop
++                                         poly1.inner.crd), # Inner loop
++                                   list( poly2.crd)) )     # Separate polygon
+> 
+> # Create simple feature column object
+> mpoly.sfc <- st_sfc( list(mpoly1.sfg), crs = 4326)
+> 
+> # Create simple feature object
+> mpoly.sf <- st_sf(mpoly.sfc)
+> 
+> mpoly.sf
+Simple feature collection with 1 feature and 0 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 43 xmax: -66 ymax: 47
+Geodetic CRS:  WGS 84
+                       mpoly.sfc
+1 MULTIPOLYGON (((-66 43, -70...
+> poly3.coords <- rbind( c(-66, 44), c(-64, 44), c(-66,47), c(-66, 44) )
+> poly4.coords <- rbind( c(-67, 43), c(-64, 46), c(-66.5,46), c(-67, 43) ) 
+> mpoly1.sfg  <- st_multipolygon( list(
++                                   list( poly1.outer.crd,  # Outer loop
++                                         poly1.inner.crd), # Inner loop
++                                   list( poly2.crd)) )     # Separate poly
+> mpoly2.sfg  <- st_multipolygon( list(
++                                   list(poly3.coords)))  # Unique polygon
+> mpoly3.sfg  <- st_multipolygon( list(
++                                   list(poly4.coords)) )  # Unique polygon
+> mpoly.sfc <- st_sfc( list(mpoly1.sfg, mpoly2.sfg, mpoly3.sfg), crs = 4326)
+> mpoly.sf <- st_sf(mpoly.sfc)
+> mpoly.sf$ids <- c("A", "B", "C")
+> plot(mpoly.sf["ids"], axes = TRUE, main = NULL,
++      pal = sf.colors(alpha = 0.5, categorical = TRUE))
+> st_is_valid(mpoly.sf)
+[1] TRUE TRUE TRUE
+> # Create sfc from sf
+> st_geometry(mpoly.sf)
+Geometry set for 3 features 
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 43 xmax: -64 ymax: 47
+Geodetic CRS:  WGS 84
+MULTIPOLYGON (((-66 43, -70 47, -70 43, -66 43)...
+MULTIPOLYGON (((-66 44, -64 44, -66 47, -66 44)))
+MULTIPOLYGON (((-67 43, -64 46, -66.5 46, -67 4...
+> st_geometry(mpoly.sf)[[1]]
+MULTIPOLYGON (((-66 43, -70 47, -70 43, -66 43), (-68 44, -69 44, -69 45, -68 44)), ((-67 45, -67 47, -69 47, -67 45)))
+> st_geometry(mpoly.sf)[[1]][]
+[[1]]
+[[1]][[1]]
+     [,1] [,2]
+[1,]  -66   43
+[2,]  -70   47
+[3,]  -70   43
+[4,]  -66   43
+
+[[1]][[2]]
+     [,1] [,2]
+[1,]  -68   44
+[2,]  -69   44
+[3,]  -69   45
+[4,]  -68   44
+
+
+[[2]]
+[[2]][[1]]
+     [,1] [,2]
+[1,]  -67   45
+[2,]  -67   47
+[3,]  -69   47
+[4,]  -67   45
+
+
+> st_as_sfc(  "POLYGON ((-66 43, -70 47, -70 43, -66 43), (-68 44, -69 44, -69 45, -68 44))" )
+Geometry set for 1 feature 
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: -70 ymin: 43 xmax: -66 ymax: 47
+CRS:           NA
+POLYGON ((-66 43, -70 47, -70 43, -66 43), (-68...
+> 
