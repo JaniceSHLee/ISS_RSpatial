@@ -1,0 +1,859 @@
+
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[R.app GUI 1.77 (8007) x86_64-apple-darwin17.0]
+
+Warning: namespace ‘XVector’ is not available and has been replaced
+by .GlobalEnv when processing object ‘S7seq’
+[Workspace restored from /Users/matthewwalker/.RData]
+[History restored from /Users/matthewwalker/.Rapp.history]
+
+> library(sf)
+Linking to GEOS 3.9.1, GDAL 3.4.0, PROJ 8.1.1; sf_use_s2() is TRUE
+> 
+> z <- gzcon(url("https://github.com/mgimond/Spatial/raw/main/Data/Income_schooling_sf.rds"))
+> s1.sf <- readRDS(z)
+> 
+> z <- gzcon(url("https://github.com/mgimond/Spatial/raw/main/Data/Dist_sf.rds"))
+> s2.sf <- readRDS(z)
+> 
+> z <- gzcon(url("https://github.com/mgimond/Spatial/raw/main/Data/Highway_sf.rds"))
+> l1.sf <- readRDS(z)
+> library(ggplot2)
+> 
+> ggplot() + 
++   geom_sf(data = s1.sf) +
++   geom_sf(data = s2.sf, alpha = 0.5, col = "red") +
++   geom_sf(data = l1.sf, col = "blue")
+2022-03-08 20:42:10.513 R[4944:94804] +[NSSavePanel _warmUp] attempted warmup
+> ME <- st_union(s1.sf, by_feature = FALSE)
+> 
+> ggplot(ME) + geom_sf(fill = "grey")
+> s1.sf$med <- s1.sf$Income > median(s1.sf$Income)
+> 
+> ggplot(s1.sf) + geom_sf(aes(fill = med))
+> ME.inc <- aggregate(s1.sf["med"], by = list(diss = s1.sf$med), 
++                     FUN = function(x)x[1], do_union = TRUE)
+> st_drop_geometry(ME.inc) # Print the layer's attributes table
+   diss   med
+1 FALSE FALSE
+2  TRUE  TRUE
+> ME.inc <- s1.sf %>% 
++      group_by(med) %>% 
++      summarise() 
+Error in summarise(.) : could not find function "summarise"
+> ME.inc <- s1.sf %>% 
++      group_by(med) %>% 
++      summarise() 
+Error in summarise(.) : could not find function "summarise"
+> st_drop_geometry(ME.inc)
+   diss   med
+1 FALSE FALSE
+2  TRUE  TRUE
+> ggplot(ME.inc) + geom_sf(aes(fill = med))
+> ME.inc <- s1.sf %>%  
++      group_by(med) %>%   
++      summarize(medinc = median(Income)) 
+Error in summarize(., medinc = median(Income)) : 
+  could not find function "summarize"
+> 
+> ggplot(ME.inc) + geom_sf(aes(fill = medinc))
+Error in FUN(X[[i]], ...) : object 'medinc' not found
+> ME.inc <- s1.sf %>% 
++      group_by(med) %>% 
++      summarize() 
+Error in summarize(.) : could not find function "summarize"
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+starting httpd help server ... done
+> ME.inc <- s1.sf %>% 
++      group_by(med) %>% 
++      summarise() 
+> st_drop_geometry(ME.inc)
+# A tibble: 2 × 1
+  med  
+* <lgl>
+1 FALSE
+2 TRUE 
+> ggplot(ME.inc) + geom_sf(aes(fill = med))
+> ME.inc <- s1.sf %>%  
++      group_by(med) %>%   
++      summarize(medinc = median(Income)) 
+> 
+> ggplot(ME.inc) + geom_sf(aes(fill = medinc))
+> st_drop_geometry(ME.inc)
+# A tibble: 2 × 2
+  med   medinc
+* <lgl>  <dbl>
+1 FALSE  21518
+2 TRUE   27955
+> ME.ken <- s1.sf[s1.sf$NAME == "Kennebec",]
+> ME.ken <- s1.sf %>% 
++       filter(NAME == "Kennebec")
+> ggplot(ME.ken) + geom_sf()
+ME.inc2 <- s1.sf %>% 
+    filter(Income < median(Income))
+
+ggplot(ME.inc2) + geom_sf()
+> 
+> ME.inc2 <- s1.sf %>% 
++     filter(Income < median(Income))
+> 
+> ggplot(ME.inc2) + geom_sf()
+> clp1 <- st_intersection(s1.sf, s2.sf)
+Warning message:
+attribute variables are assumed to be spatially constant throughout all geometries 
+> 
+> ggplot(clp1) + geom_sf()
+> st_drop_geometry(clp1)
+             NAME Income   NoSchool  NoSchoolSE IncomeSE   med distance
+8        Kennebec  25652 0.00570358 0.000917087  360.000  TRUE       20
+12        Lincoln  27839 0.00278315 0.001030800  571.515  TRUE       20
+14      Sagadahoc  28122 0.00285524 0.000900782  544.849  TRUE       20
+1        Somerset  21025 0.00521153 0.001150020  390.909 FALSE       50
+5        Franklin  21744 0.00508507 0.001641740  530.909 FALSE       50
+6          Oxford  21885 0.00700822 0.001318160  536.970 FALSE       50
+7           Waldo  23020 0.00498141 0.000918837  450.909 FALSE       50
+8.1      Kennebec  25652 0.00570358 0.000917087  360.000  TRUE       50
+9    Androscoggin  24268 0.00830953 0.001178660  460.606  TRUE       50
+11           Knox  27141 0.00652269 0.001863920  684.849  TRUE       50
+12.1      Lincoln  27839 0.00278315 0.001030800  571.515  TRUE       50
+13     Cumberland  32549 0.00494917 0.000683236  346.061  TRUE       50
+14.1    Sagadahoc  28122 0.00285524 0.000900782  544.849  TRUE       50
+1.1      Somerset  21025 0.00521153 0.001150020  390.909 FALSE       80
+2     Piscataquis  21292 0.00633830 0.002128960  724.242 FALSE       80
+3       Penobscot  23307 0.00684534 0.001025450  242.424 FALSE       80
+5.1      Franklin  21744 0.00508507 0.001641740  530.909 FALSE       80
+6.1        Oxford  21885 0.00700822 0.001318160  536.970 FALSE       80
+7.1         Waldo  23020 0.00498141 0.000918837  450.909 FALSE       80
+9.1  Androscoggin  24268 0.00830953 0.001178660  460.606  TRUE       80
+10        Hancock  28071 0.00238996 0.000784584  585.455  TRUE       80
+11.1         Knox  27141 0.00652269 0.001863920  684.849  TRUE       80
+12.2      Lincoln  27839 0.00278315 0.001030800  571.515  TRUE       80
+13.1   Cumberland  32549 0.00494917 0.000683236  346.061  TRUE       80
+14.2    Sagadahoc  28122 0.00285524 0.000900782  544.849  TRUE       80
+1.2      Somerset  21025 0.00521153 0.001150020  390.909 FALSE      120
+2.1   Piscataquis  21292 0.00633830 0.002128960  724.242 FALSE      120
+3.1     Penobscot  23307 0.00684534 0.001025450  242.424 FALSE      120
+5.2      Franklin  21744 0.00508507 0.001641740  530.909 FALSE      120
+6.2        Oxford  21885 0.00700822 0.001318160  536.970 FALSE      120
+7.2         Waldo  23020 0.00498141 0.000918837  450.909 FALSE      120
+10.1      Hancock  28071 0.00238996 0.000784584  585.455  TRUE      120
+13.2   Cumberland  32549 0.00494917 0.000683236  346.061  TRUE      120
+15           York  28496 0.00529228 0.000737195  332.121  TRUE      120
+> clp2 <- st_intersection(s2.sf, st_union(s1.sf)) 
+Warning message:
+attribute variables are assumed to be spatially constant throughout all geometries 
+> 
+> ggplot(clp2) + geom_sf()
+> clp2 <- st_intersection(s1.sf, st_union(s2.sf)) 
+Warning message:
+attribute variables are assumed to be spatially constant throughout all geometries 
+> 
+> ggplot(clp2) + geom_sf()
+> clp3 <- st_intersection(l1.sf, st_union(s2.sf))
+Warning message:
+attribute variables are assumed to be spatially constant throughout all geometries 
+> ggplot(clp3) + 
++   geom_sf(data = clp3) +
++   geom_sf(data = st_union(s2.sf), col = "red", fill = NA )
+> un1  <- st_union(s2.sf,s1.sf)
+Warning message:
+attribute variables are assumed to be spatially constant throughout all geometries 
+> 
+> ggplot(un1) + geom_sf(aes(fill = NAME), alpha = 0.4)
+> un1 %>% filter(NAME == "Aroostook")
+Simple feature collection with 4 features and 7 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: 318980.1 ymin: 4788093 xmax: 596500.1 ymax: 5255569
+Projected CRS: SOURCECRS
+  distance      NAME Income  NoSchool NoSchoolSE IncomeSE   med                       geometry
+1       20 Aroostook  21024 0.0133872 0.00140696  250.909 FALSE MULTIPOLYGON (((438980 4928...
+2       50 Aroostook  21024 0.0133872 0.00140696  250.909 FALSE MULTIPOLYGON (((438980 4958...
+3       80 Aroostook  21024 0.0133872 0.00140696  250.909 FALSE MULTIPOLYGON (((438980 4988...
+4      120 Aroostook  21024 0.0133872 0.00140696  250.909 FALSE MULTIPOLYGON (((438980 5028...
+> l1.sf.buf <- st_buffer(l1.sf, dist = 10000)
+> 
+> ggplot(l1.sf.buf) + geom_sf() + coord_sf(ndiscr = 1000)
+> l1.sf.buf.dis <- l1.sf.buf %>% 
++   group_by()  %>% 
++   summarise()
+> 
+> ggplot(l1.sf.buf.dis) + geom_sf() 
+> l1.sf.buf.dis <- l1.sf.buf %>% 
++     group_by(Number)  %>% 
++     summarise()
+> 
+> ggplot(l1.sf.buf.dis, aes(fill=Number) ) + geom_sf(alpha = 0.5)
+> load(url("https://github.com/mgimond/Spatial/raw/main/Data/Sample1.RData"))
+> rm(list=c("inter.sf", "p.sf", "rail.sf"))
+> library(sf)   
+> sf_extSoftVersion()[1:3]
+   GEOS    GDAL  proj.4 
+"3.9.1" "3.4.0" "8.1.1" 
+> st_crs(s.sf)
+Coordinate Reference System:
+  User input: EPSG:26919 
+  wkt:
+PROJCRS["NAD83 / UTM zone 19N",
+    BASEGEOGCRS["NAD83",
+        DATUM["North American Datum 1983",
+            ELLIPSOID["GRS 1980",6378137,298.257222101,
+                LENGTHUNIT["metre",1]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433]],
+        ID["EPSG",4269]],
+    CONVERSION["UTM zone 19N",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",-69,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",0.9996,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",500000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1]],
+    USAGE[
+        SCOPE["Engineering survey, topographic mapping."],
+        AREA["North America - between 72Â°W and 66Â°W - onshore and offshore. Canada - Labrador; New Brunswick; Nova Scotia; Nunavut; Quebec. Puerto Rico. United States (USA) - Connecticut; Maine; Massachusetts; New Hampshire; New York (Long Island); Rhode Island; Vermont."],
+        BBOX[14.92,-72,84,-66]],
+    ID["EPSG",26919]]
+> library(raster)
+Loading required package: sp
+
+Attaching package: ‘raster’
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+> crs(elev.r)
+Coordinate Reference System:
+Deprecated Proj.4 representation:
+ +proj=utm +zone=19 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0 
+Warning message:
+In wkt(x) : CRS object has no comment
+> s.sf <- st_set_crs(s.sf, "+proj=utm +zone=19 +ellps=GRS80 +datum=NAD83") 
+> st_crs(s.sf)
+Coordinate Reference System:
+  User input: +proj=utm +zone=19 +ellps=GRS80 +datum=NAD83 
+  wkt:
+PROJCRS["unknown",
+    BASEGEOGCRS["unknown",
+        DATUM["North American Datum 1983",
+            ELLIPSOID["GRS 1980",6378137,298.257222101,
+                LENGTHUNIT["metre",1]],
+            ID["EPSG",6269]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8901]]],
+    CONVERSION["UTM zone 19N",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",-69,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",0.9996,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",500000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]],
+        ID["EPSG",16019]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]]]
+> s.sf <- st_set_crs(s.sf, 26919)
+> st_crs(s.sf)  
+Coordinate Reference System:
+  User input: EPSG:26919 
+  wkt:
+PROJCRS["NAD83 / UTM zone 19N",
+    BASEGEOGCRS["NAD83",
+        DATUM["North American Datum 1983",
+            ELLIPSOID["GRS 1980",6378137,298.257222101,
+                LENGTHUNIT["metre",1]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433]],
+        ID["EPSG",4269]],
+    CONVERSION["UTM zone 19N",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",-69,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",0.9996,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",500000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1]],
+    USAGE[
+        SCOPE["Engineering survey, topographic mapping."],
+        AREA["North America - between 72°W and 66°W - onshore and offshore. Canada - Labrador; New Brunswick; Nova Scotia; Nunavut; Quebec. Puerto Rico. United States (USA) - Connecticut; Maine; Massachusetts; New Hampshire; New York (Long Island); Rhode Island; Vermont."],
+        BBOX[14.92,-72,84,-66]],
+    ID["EPSG",26919]]
+> crs(elev.r) <- "+proj=utm +zone=19 +ellps=GRS80 +datum=NAD83"
+> crs(elev.r)
+Coordinate Reference System:
+Deprecated Proj.4 representation:
+ +proj=utm +zone=19 +datum=NAD83 +units=m +no_defs 
+WKT2 2019 representation:
+PROJCRS["unknown",
+    BASEGEOGCRS["unknown",
+        DATUM["North American Datum 1983",
+            ELLIPSOID["GRS 1980",6378137,298.257222101,
+                LENGTHUNIT["metre",1]],
+            ID["EPSG",6269]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8901]]],
+    CONVERSION["UTM zone 19N",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",-69,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",0.9996,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",500000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]],
+        ID["EPSG",16019]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]]] 
+> crs(elev.r) <- "+init=EPSG:26919"
+> crs(elev.r) 
+Coordinate Reference System:
+Deprecated Proj.4 representation:
+ +proj=utm +zone=19 +datum=NAD83 +units=m +no_defs 
+WKT2 2019 representation:
+PROJCRS["unknown",
+    BASEGEOGCRS["unknown",
+        DATUM["North American Datum 1983",
+            ELLIPSOID["GRS 1980",6378137,298.257222101,
+                LENGTHUNIT["metre",1]],
+            ID["EPSG",6269]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8901]]],
+    CONVERSION["UTM zone 19N",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",-69,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",0.9996,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",500000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]],
+        ID["EPSG",16019]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]]] 
+> s.sf.gcs <- st_transform(s.sf, "+proj=longlat +datum=WGS84")
+> st_crs(s.sf.gcs)
+Coordinate Reference System:
+  User input: +proj=longlat +datum=WGS84 
+  wkt:
+GEOGCRS["unknown",
+    DATUM["World Geodetic System 1984",
+        ELLIPSOID["WGS 84",6378137,298.257223563,
+            LENGTHUNIT["metre",1]],
+        ID["EPSG",6326]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433],
+        ID["EPSG",8901]],
+    CS[ellipsoidal,2],
+        AXIS["longitude",east,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]],
+        AXIS["latitude",north,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]]
+> s.sf.gcs <- st_transform(s.sf, 4326)
+> st_crs(s.sf.gcs)
+Coordinate Reference System:
+  User input: EPSG:4326 
+  wkt:
+GEOGCRS["WGS 84",
+    ENSEMBLE["World Geodetic System 1984 ensemble",
+        MEMBER["World Geodetic System 1984 (Transit)"],
+        MEMBER["World Geodetic System 1984 (G730)"],
+        MEMBER["World Geodetic System 1984 (G873)"],
+        MEMBER["World Geodetic System 1984 (G1150)"],
+        MEMBER["World Geodetic System 1984 (G1674)"],
+        MEMBER["World Geodetic System 1984 (G1762)"],
+        ELLIPSOID["WGS 84",6378137,298.257223563,
+            LENGTHUNIT["metre",1]],
+        ENSEMBLEACCURACY[2.0]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433]],
+    CS[ellipsoidal,2],
+        AXIS["geodetic latitude (Lat)",north,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433]],
+        AXIS["geodetic longitude (Lon)",east,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433]],
+    USAGE[
+        SCOPE["Horizontal component of 3D system."],
+        AREA["World."],
+        BBOX[-90,-180,90,180]],
+    ID["EPSG",4326]]
+> elev.r.gcs <- projectRaster(elev.r, crs="+proj=longlat +datum=WGS84")
+> crs(elev.r.gcs)
+Coordinate Reference System:
+Deprecated Proj.4 representation: +proj=longlat +datum=WGS84 +no_defs 
+WKT2 2019 representation:
+GEOGCRS["unknown",
+    DATUM["World Geodetic System 1984",
+        ELLIPSOID["WGS 84",6378137,298.257223563,
+            LENGTHUNIT["metre",1]],
+        ID["EPSG",6326]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433],
+        ID["EPSG",8901]],
+    CS[ellipsoidal,2],
+        AXIS["longitude",east,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]],
+        AXIS["latitude",north,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]] 
+> elev.r.gcs <- projectRaster(elev.r, crs="+init=EPSG:4326")
+> crs(elev.r.gcs)
+Coordinate Reference System:
+Deprecated Proj.4 representation: +proj=longlat +datum=WGS84 +no_defs 
+WKT2 2019 representation:
+GEOGCRS["unknown",
+    DATUM["World Geodetic System 1984",
+        ELLIPSOID["WGS 84",6378137,298.257223563,
+            LENGTHUNIT["metre",1]],
+        ID["EPSG",6326]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433],
+        ID["EPSG",8901]],
+    CS[ellipsoidal,2],
+        AXIS["longitude",east,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]],
+        AXIS["latitude",north,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]] 
+> library(leaflet)
+> leaflet(s.sf.gcs) %>% 
++   addPolygons() %>% 
++   addTiles()
+> library(tmap)
+> data(World)  # The dataset is stored as an sf object
+>  
+> # Let's check its current coordinate system
+> st_crs(World)
+Coordinate Reference System:
+  User input: EPSG:4326 
+  wkt:
+GEOGCRS["WGS 84",
+    DATUM["World Geodetic System 1984",
+        ELLIPSOID["WGS 84",6378137,298.257223563,
+            LENGTHUNIT["metre",1]]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433]],
+    CS[ellipsoidal,2],
+        AXIS["geodetic latitude (Lat)",north,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433]],
+        AXIS["geodetic longitude (Lon)",east,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433]],
+    USAGE[
+        SCOPE["unknown"],
+        AREA["World"],
+        BBOX[-90,-180,90,180]],
+    ID["EPSG",4326]]
+> World.ae <- st_transform(World, "+proj=aeqd +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+> st_crs(World.ae) 
+Coordinate Reference System:
+  User input: +proj=aeqd +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs 
+  wkt:
+PROJCRS["unknown",
+    BASEGEOGCRS["unknown",
+        DATUM["World Geodetic System 1984",
+            ELLIPSOID["WGS 84",6378137,298.257223563,
+                LENGTHUNIT["metre",1]],
+            ID["EPSG",6326]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8901]]],
+    CONVERSION["unknown",
+        METHOD["Modified Azimuthal Equidistant",
+            ID["EPSG",9832]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["False easting",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]]]
+> tm_shape(World.ae) + tm_fill() 
+> World.aemaine <- st_transform(World, "+proj=aeqd +lat_0=44.5 +lon_0=-69.8 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+> 
+> tm_shape(World.aemaine) + tm_fill()  
+> World.robin <- st_transform(World,"+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+> tm_shape(World.robin) + tm_fill()  
+> World.sin <- st_transform(World,"+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+> tm_shape(World.sin) + tm_fill()  
+> World.mercator <- st_transform(World,"+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+> tm_shape(World.mercator) + tm_fill()  
+> World.mercator2 <- st_transform(World, "+proj=merc +lon_0=-69 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+> 
+> tm_shape(World.mercator2) + tm_borders()
+> library(maptools)
+Checking rgeos availability: FALSE
+Please note that 'maptools' will be retired by the end of 2023,
+plan transition at your earliest convenience;
+some functionality will be moved to 'sp'.
+ 	Note: when rgeos is not available, polygon geometry 	computations in maptools depend on gpclib,
+ 	which has a restricted licence. It is disabled by default;
+ 	to enable gpclib, type gpclibPermit()
+> 
+> # Convert to lat/long reference system
+> wld.ll <- st_transform(World, "+proj=longlat +datum=WGS84 +no_defs")
+> 
+> # Convert to a spatial object, then split the polygons at a given longitude (111 in this example)
+> wld.sp <- nowrapSpatialPolygons(as(wld.ll, "Spatial"), offset = 111)
+Warning message:
+In proj4string(obj) :
+  CRS object has comment, which is lost in output; in tests, see
+https://cran.r-project.org/web/packages/sp/vignettes/CRS_warnings.html
+> 
+> # Now convert back to an sf object, reproject to a new longitude center at -69 degrees 
+> # then plot it
+> wld.sf <- st_as_sf(wld.sp)
+> wld.merc2.sf <- st_transform(wld.sf, "+proj=merc +lon_0=-69 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+> tm_shape(wld.merc2.sf) + tm_borders()
+> wld.rob.sf <- st_transform(wld.sf,"+proj=robin +lon_0=-69 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+> tm_shape(wld.rob.sf) + tm_borders()
+> # Create centroids from polygons
+> pt <- st_centroid(World, of_largest_polygon = TRUE)
+Warning message:
+In st_centroid.sf(World, of_largest_polygon = TRUE) :
+  st_centroid assumes attributes are constant over geometries of x
+> 
+> # Transform points to the recentered Robinson projection
+> pt.rob <- st_transform(pt,"+proj=robin +lon_0=-69 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+> 
+> # Perform the spatial join (joining the point attribute values to the wld.rob.sf polygons)
+> wld.rob.df.sf <- st_join(wld.rob.sf, pt.rob, join = st_contains)
+> 
+> # Map the output
+> tm_shape(wld.rob.df.sf) + tm_polygons(col="pop_est_dens", style="quantile") +
++   tm_legend(outside=TRUE)
+> library(dplyr)
+> 
+> # Extract the extent for the Norwar/Sweden region
+> nor.bb <- World %>% filter(name == "Norway" | name == "Sweden") %>% st_bbox()
+> 
+> # Plot the data zoomed in on the region. Add the point layer for reference
+> tm_shape(World, bbox=nor.bb) + tm_polygons(col="pop_est_dens", style="quantile") +
++   tm_shape(pt) + tm_dots() +
++   tm_text("name", just="left", xmod=0.5, size=0.8) +
++   tm_legend(outside=TRUE)
+> pt <- st_point_on_surface(World)
+Warning messages:
+1: In st_point_on_surface.sf(World) :
+  st_point_on_surface assumes attributes are constant over geometries of x
+2: In st_point_on_surface.sfc(st_geometry(x)) :
+  st_point_on_surface may not give correct results for longitude/latitude data
+> 
+> pt.rob <- st_transform(pt,"+proj=robin +lon_0=-69 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+> wld.rob.df.sf <- st_join(wld.rob.sf, pt.rob, join = st_contains)
+> tm_shape(wld.rob.df.sf) + tm_polygons(col="pop_est_dens", style="quantile") +
++   tm_legend(outside=TRUE)
+> # Define a few projections
+> miller <- "+proj=mill +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+> lambert <- "+proj=lcc +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+> 
+> # Subset the World data layer
+> wld.mil <-  World %>% filter( iso_a3  == "CAN" |  iso_a3 == "USA") %>% st_transform( miller)
+> 
+> # Create polygon and point layers in the Miller projection  
+> sf1 <- st_sfc( st_polygon(list(cbind(c(-13340256,-13340256,-6661069, -6661069, -13340256),
++                                c(7713751, 5326023, 5326023,7713751, 7713751 )))), crs = miller) 
+> 
+> pt1 <- st_sfc( st_multipoint(rbind(c(-11688500,7633570), c(-11688500,5375780),
++                                   c(-10018800,7633570), c(-10018800,5375780),
++                                   c(-8348960,7633570), c(-8348960,5375780))),  crs = miller)
+> pt1 <- st_cast(pt1, "POINT") # Create single part points
+> 
+> # Plot the data layers in their native projection
+> tm_shape(wld.mil) +tm_fill(col="grey") + 
++   tm_graticules(x = c(-60,-80,-100, -120, -140), 
++                 y = c(30,45, 60), 
++                 labels.col = "white", col="grey90") +
++   tm_shape(sf1) + tm_polygons("red", alpha = 0.5, border.col = "yellow") +
++   tm_shape(pt1) + tm_dots(size=0.2) 
+> st_contains(sf1, pt1)
+Sparse geometry binary predicate list of length 1, where the predicate was `contains'
+ 1: 1, 2, 3, 4, 5, 6
+> # Transform the data
+> wld.lam <- st_transform(wld.mil, lambert)
+> pt1.lam <- st_transform(pt1, lambert)
+> sf1.lam <- st_transform(sf1, lambert)
+> 
+> # Plot the data in the Lambert coordinate system
+> tm_shape(wld.lam) +tm_fill(col="grey") + 
++   tm_graticules( x = c(-60,-80,-100, -120, -140), 
++                  y = c(30,45, 60), 
++                  labels.col = "white", col="grey90") +
++   tm_shape(sf1.lam) + tm_polygons("red", alpha = 0.5, border.col = "yellow") +
++   tm_shape(pt1.lam) + tm_dots(size=0.2)   
+> st_contains(sf1.lam, pt1.lam)
+Sparse geometry binary predicate list of length 1, where the predicate was `contains'
+ 1: 1, 3, 5
+> # Add vertices every 1000 meters along the polygon's line segments
+> sf2 <- st_segmentize(sf1, 1000)
+> 
+> # Transform the newly densified polygon layer
+> sf2.lam <- st_transform(sf2, lambert)
+> 
+> # Plot the data
+> tm_shape(wld.lam) + tm_fill(col="grey") + 
++   tm_graticules( x = c(-60,-80,-100, -120, -140), 
++                  y = c(30,45, 60), 
++                  labels.col = "white", col="grey90") +
++   tm_shape(sf2.lam) + tm_polygons("red", alpha = 0.5, border.col = "yellow") +
++   tm_shape(pt1.lam) + tm_dots(size=0.2) 
+> st_contains(sf2.lam, pt1.lam)
+Sparse geometry binary predicate list of length 1, where the predicate was `contains'
+ 1: 1, 2, 3, 4, 5, 6
+> tissot.pt <- st_sfc( st_multipoint(rbind(c(-60,30), c(-60,45), c(-60,60),
++                                   c(-80,30), c(-80,45), c(-80,60),
++                                   c(-100,30), c(-100,45), c(-100,60),
++                                   c(-120,30), c(-120,45), c(-120,60) )),  crs = "+proj=longlat")
+> tissot.pt <- st_cast(tissot.pt, "POINT") # Create single part points
+> library(geosphere)
+Error in library(geosphere) : there is no package called ‘geosphere’
+> 
+> cr.pt <- list() # Create an empty list
+> 
+> # Loop through each point in tissot.pt and generate 360 vertices at 300 km
+> # from each point in all directions at 1 degree increment. These vertices
+> # will be used to approximate the Tissot circles
+> for (i in 1:length(tissot.pt)){
++   cr.pt[[i]] <- list( destPoint( as(tissot.pt[i], "Spatial"), b=seq(0,360,1), d=300000) )
++ }
+Error in destPoint(as(tissot.pt[i], "Spatial"), b = seq(0, 360, 1), d = 3e+05) : 
+  could not find function "destPoint"
+> 
+> # Create a closed polygon from the previously generated vertices
+> tissot.sfc <- st_cast( st_sfc(st_multipolygon(cr.pt ),crs = "+proj=longlat"), "POLYGON" )
+> tissot.sf <- st_sf( geoArea =  st_area(tissot.sfc), tissot.sfc )
+> ( (pi * 300000^2) -  as.vector(tissot.sf$geoArea) ) / (pi * 300000^2)
+numeric(0)
+> # Transform geodesic circles and compute area error as a percentage
+> tissot.merc <- st_transform(tissot.sf, "+proj=merc +ellps=WGS84")
+> tissot.merc$area_err <- round((st_area(tissot.merc, tissot.merc$geoArea)) / 
++                                 tissot.merc$geoArea * 100 , 2)
+> 
+> # Plot the map
+> tm_shape(World, bbox = st_bbox(tissot.merc), projection = st_crs(tissot.merc)) + 
++   tm_borders() + 
++   tm_shape(tissot.merc) + tm_polygons(col="grey", border.col = "red", alpha = 0.3) + 
++   tm_graticules(x = c(-60,-80,-100, -120, -140), 
++                 y = c(30,45, 60),
++                labels.col = "white", col="grey80") +
++   tm_text("area_err", size=.8, alpha=0.8, col="blue")
+Error: The shape tissot.merc only contains empty units.
+trying URL 'https://cran.ma.imperial.ac.uk/bin/macosx/contrib/4.1/geosphere_1.5-14.tgz'
+Content type 'application/x-gzip' length 1007318 bytes (983 KB)
+==================================================
+downloaded 983 KB
+
+
+The downloaded binary packages are in
+	/var/folders/9j/pnm7wkl937dft0c039j34xmr0000gn/T//Rtmpqi0nQH/downloaded_packages
+> tissot.pt <- st_sfc( st_multipoint(rbind(c(-60,30), c(-60,45), c(-60,60),
++ +                                   c(-80,30), c(-80,45), c(-80,60),
++ +                                   c(-100,30), c(-100,45), c(-100,60),
++ +                                   c(-120,30), c(-120,45), c(-120,60) )),  crs = "+proj=longlat")
+> > tissot.pt <- st_cast(tissot.pt, "POINT") # Create single part points
+Error: unexpected '>' in ">"
+> > library(geosphere)
+Error: unexpected '>' in ">"
+> tissot.pt <- st_sfc( st_multipoint(rbind(c(-60,30), c(-60,45), c(-60,60),
++                                   c(-80,30), c(-80,45), c(-80,60),
++                                   c(-100,30), c(-100,45), c(-100,60),
++                                   c(-120,30), c(-120,45), c(-120,60) )),  crs = "+proj=longlat")
+> tissot.pt <- st_cast(tissot.pt, "POINT") # Create single part points
+> library(geosphere)
+> 
+> cr.pt <- list() # Create an empty list
+> 
+> # Loop through each point in tissot.pt and generate 360 vertices at 300 km
+> # from each point in all directions at 1 degree increment. These vertices
+> # will be used to approximate the Tissot circles
+> for (i in 1:length(tissot.pt)){
++   cr.pt[[i]] <- list( destPoint( as(tissot.pt[i], "Spatial"), b=seq(0,360,1), d=300000) )
++ }
+> 
+> # Create a closed polygon from the previously generated vertices
+> tissot.sfc <- st_cast( st_sfc(st_multipolygon(cr.pt ),crs = "+proj=longlat"), "POLYGON" )
+> tissot.sf <- st_sf( geoArea =  st_area(tissot.sfc), tissot.sfc )
+> ( (pi * 300000^2) -  as.vector(tissot.sf$geoArea) ) / (pi * 300000^2)
+ [1] -0.0008937164  0.0024530577  0.0057943110 -0.0008937164  0.0024530577  0.0057943110 -0.0008937164  0.0024530577  0.0057943110 -0.0008937164  0.0024530577  0.0057943110
+> # Transform geodesic circles and compute area error as a percentage
+> tissot.merc <- st_transform(tissot.sf, "+proj=merc +ellps=WGS84")
+> tissot.merc$area_err <- round((st_area(tissot.merc, tissot.merc$geoArea)) / 
++                                 tissot.merc$geoArea * 100 , 2)
+> 
+> # Plot the map
+> tm_shape(World, bbox = st_bbox(tissot.merc), projection = st_crs(tissot.merc)) + 
++   tm_borders() + 
++   tm_shape(tissot.merc) + tm_polygons(col="grey", border.col = "red", alpha = 0.3) + 
++   tm_graticules(x = c(-60,-80,-100, -120, -140), 
++                 y = c(30,45, 60),
++                labels.col = "white", col="grey80") +
++   tm_text("area_err", size=.8, alpha=0.8, col="blue")
+> # Transform geodesic circles and compute area error as a percentage
+> tissot.laea <- st_transform(tissot.sf, "+proj=laea +lat_0=45 +lon_0=-100 +ellps=WGS84")
+> tissot.laea$area_err <- round( (st_area(tissot.laea ) - tissot.laea$geoArea) / 
++                                  tissot.laea$geoArea * 100, 2)
+> 
+> # Plot the map
+> tm_shape(World, bbox = st_bbox(tissot.laea), projection = st_crs(tissot.laea)) + 
++   tm_borders() + 
++   tm_shape(tissot.laea) + tm_polygons(col="grey", border.col = "red", alpha = 0.3) + 
++   tm_graticules(x=c(-60,-80,-100, -120, -140), 
++            y = c(30,45, 60),
++            labels.col = "white", col="grey80") +
++   tm_text("area_err", size=.8, alpha=0.8, col="blue")
+> # Transform geodesic circles and compute area error as a percentage
+> tissot.robin <- st_transform(tissot.sf, "+proj=robin  +ellps=WGS84")
+> tissot.robin$area_err <- round(  (st_area(tissot.robin ) - tissot.robin$geoArea) / 
++                                    tissot.robin$geoArea * 100, 2)
+> 
+> # Plot the map
+> tm_shape(World, bbox = st_bbox(tissot.robin), projection = st_crs(tissot.robin)) + 
++   tm_borders() + 
++   tm_shape(tissot.robin) + tm_polygons(col="grey", border.col = "red", alpha = 0.3) + 
++   tm_graticules(x=c(-60,-80,-100, -120, -140), 
++                 y = c(30,45, 60),
++                 labels.col = "white", col="grey80") +
++   tm_text("area_err", size=.8, alpha=0.8, col="blue")
+2022-03-08 21:37:02.674 R[4944:94804] Bad cursor rect event, flags = 0
+> 
