@@ -1,0 +1,52 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <Description>Layer_1</Description>
+    <Metadata>
+      <MDI key="LAYER_TYPE">athematic</MDI>
+      <MDI key="STATISTICS_MAXIMUM">0.99125000834465</MDI>
+      <MDI key="STATISTICS_MEAN">0.49315916713726</MDI>
+      <MDI key="STATISTICS_MINIMUM">0.014208333101124</MDI>
+      <MDI key="STATISTICS_STDDEV">0.28482553948364</MDI>
+    </Metadata>
+  </PAMRasterBand>
+  <PAMRasterBand band="2">
+    <Description>Layer_2</Description>
+    <Metadata>
+      <MDI key="LAYER_TYPE">athematic</MDI>
+      <MDI key="STATISTICS_MAXIMUM">0.97619047760963</MDI>
+      <MDI key="STATISTICS_MEAN">0.46920989734466</MDI>
+      <MDI key="STATISTICS_MINIMUM">0.033333335071802</MDI>
+      <MDI key="STATISTICS_STDDEV">0.35012812993732</MDI>
+    </Metadata>
+  </PAMRasterBand>
+  <PAMRasterBand band="3">
+    <Description>Layer_3</Description>
+    <Metadata>
+      <MDI key="LAYER_TYPE">athematic</MDI>
+      <MDI key="STATISTICS_MAXIMUM">0.995685338974</MDI>
+      <MDI key="STATISTICS_MEAN">0.44951826699392</MDI>
+      <MDI key="STATISTICS_MINIMUM">0.0055942831095308</MDI>
+      <MDI key="STATISTICS_STDDEV">0.30656060496698</MDI>
+    </Metadata>
+  </PAMRasterBand>
+  <PAMRasterBand band="4">
+    <Description>Layer_4</Description>
+    <Metadata>
+      <MDI key="LAYER_TYPE">athematic</MDI>
+      <MDI key="STATISTICS_MAXIMUM">0.99848905205727</MDI>
+      <MDI key="STATISTICS_MEAN">0.50217121110246</MDI>
+      <MDI key="STATISTICS_MINIMUM">3.0406273675114e-09</MDI>
+      <MDI key="STATISTICS_STDDEV">0.33427093495803</MDI>
+    </Metadata>
+  </PAMRasterBand>
+  <PAMRasterBand band="5">
+    <Description>Layer_5</Description>
+    <Metadata>
+      <MDI key="LAYER_TYPE">athematic</MDI>
+      <MDI key="STATISTICS_MAXIMUM">0.93849423527718</MDI>
+      <MDI key="STATISTICS_MEAN">0.50621177389716</MDI>
+      <MDI key="STATISTICS_MINIMUM">0.098353639245033</MDI>
+      <MDI key="STATISTICS_STDDEV">0.30759846456475</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>
