@@ -77,6 +77,8 @@ plot(starbucks.km, pch=20, cex=0.6, col=rgb(0,0,0,.5), add=TRUE)  # Add points
 
 ## Quadrat density on a tessellated surface
 
+hist(pop.lg.km, main=NULL, las=1)
+
 brk  <- c( -Inf, 4, 6, 8 , Inf)  # Define the breaks
 Zcut <- cut(pop.lg.km, breaks=brk, labels=1:4)  # Classify the raster
 E    <- tess(image=Zcut)  # Create a tesselated surface
@@ -111,8 +113,8 @@ contour(K2, add=TRUE)
 
 ### Try different smoothing function. The default is gaussian. 
 K3 <- density(starbucks.km, kernel = "disc", sigma=50) # Using a 50km bandwidth
-#K3 <- density(starbucks.km, kernel = "quartic", sigma=50) # Using a 50km bandwidth
-#K3 <- density(starbucks.km, kernel = "epanechnikov", sigma=50) # Using a 50km bandwidth
+K3 <- density(starbucks.km, kernel = "quartic", sigma=50) # Using a 50km bandwidth
+K3 <- density(starbucks.km, kernel = "epanechnikov", sigma=50) # Using a 50km bandwidth
 plot(K3, main=NULL, las=1)
 contour(K3, add=TRUE)
 
