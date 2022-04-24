@@ -1,0 +1,321 @@
+---
+title: "Temperature figure with spatial interpolation"
+author: "Denise Ong"
+date: "4/24/2022"
+output: pdf_document
+---
+
+This data is of temperature in the south west Pacific Ocean. Temperature of the water is measured daily in the morning from surface to 200m deep, at 5 m interval. As the ship crosses from one water mass to another, the temperature will change significantly.
+
+#Initialise 
+##R markdown
+```{r knitr_init, echo=FALSE, cache=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=TRUE,
+	             cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE,
+               tidy = FALSE,
+               fig.height=8, 
+               fig.width=8,
+               results = 'asis')
+opts_knit$set(width=75)
+```
+
+## libraries
+```{r, message=FALSE, warning=FALSE}
+library(here)
+library(ggplot2)
+library(dplyr)
+library(readxl)
+library(lubridate) 
+library(ncdf4) # package for netcdf manipulation
+library(raster) # package for raster manipulation
+library(rgdal) # package for geospatial analysis
+library(lattice)
+library(RColorBrewer)
+```
+
+# Plot 1
+Create a plot where the y axis is the depth from 0 to 200m deep, and the x axis is the date on each day of sampling.
+## Read raw data, select and clean up data.
+```{r}
+CTD_raw <- readxl::read_excel(here("Denise", "project", "TK_CTD Downcasts copy.xlsx")) %>%
+  dplyr::rename(CTD = `cast`) %>%
+  mutate(datetime =  dmy_hms(datetime)) %>%
+  filter(!is.na(t)) %>%
+  mutate(date = date(datetime)) %>%
+  mutate(time = hour(datetime)) %>%
+  mutate(julian_day = julian(date, origin = date("2018-01-01"))) %>%
+  filter(time %in% (9:12) )
+
+#only select depth from 0 to 200m  , at 5m interval.
+depth_selected <- data.frame(seq(0, 200, by= 5))
+names(depth_selected)[1] <- "p"
+
+CTD <- inner_join(CTD_raw,depth_selected)
+
+CTD
+```
+
+## Temperature data 
+There are 2 sensors attached to the equipment, so temperature data is collected in duplicates. calculate the average at each point.
+```{r}
+temp_data <- CTD_raw %>% select(date, julian_day, time, CTD, lat, lon, p, t, t2) %>%
+  mutate(t_mean  =  (t+t2)/2)
+```
+
+
+#Temperature contour plot
+```{r}
+x <- temp_data%>% select (julian_day, p)
+y <- temp_data$t_mean
+
+scaling_factor=15
+
+#Creating polygon and Grid for Raster 
+
+xmin_gg=as.Date("2018-10-23")
+xmax_gg=as.Date("2018-11-17")
+
+xmin <- min(temp_data$julian_day) -2
+xmax <- max(temp_data$julian_day) +2
+ymax <- 200
+ymin <- 0
+# Create binding polygon
+
+  x_coord <- c(xmin,
+               xmin,
+               xmax,
+               xmax,
+               xmin)
+  y_coord <- c(ymin,
+               ymax,
+               ymax,
+               ymin,
+               ymin)
+  polygon <- cbind(x_coord, y_coord)
+  polygon <- sp::Polygon(polygon)
+  
+  polygons = sp::SpatialPolygons(list(sp::Polygons(list(polygon), "s1")))
+  # plot(polygons)
+  
+  # Create grid
+  
+  gridint <- 1 # Multiplyong factor to increase the resolution of the grid
+  gridx <- (xmax-xmin + 1)*gridint
+  gridy <- round((ymax-ymin +1 )*gridint)
+  grid <- raster::raster(nrows= gridy, ncols=gridx, 
+                         xmn=xmin, 
+                         xmx=xmax, 
+                         ymn=ymin, ymx=ymax)
+
+
+#Using KRIGE fitting to interpolate grid
+
+# fit
+  fit_krig <- fields::Krig(x, y, theta=100)
+  #this part takes too long.
+
+# look at the surface
+# fields::surface(fit_krig, type="C") 
+
+# interpolate to the raster grid
+grid_krig <- raster::interpolate(grid, fit_krig)
+
+# Mask the grid
+grid_krig <- raster::mask(x=grid_krig, mask=polygons)
+
+# Plot the interpolation
+# raster::plot(grid_krig)
+
+# Transform to data frame for ggplot
+
+val <- data.frame(t_c1_fit = raster::getValues(grid_krig))
+xy <- as.data.frame(raster::xyFromCell(grid_krig,1:raster::ncell(grid_krig)))
+grid_t_c1_krig <- bind_cols(xy,val) %>%   
+  mutate(date=as_date(x, origin="2018-01-01"), 
+         t_c1_fit = if_else(t_c1_fit <0,0,t_c1_fit) ) %>%
+  dplyr::rename(depth_m=y) %>% 
+  filter(!is.na(t_c1_fit))
+
+# Plot with ggplot
+  
+temp <- ggplot(grid_t_c1_krig, aes(x=date, y=depth_m)) +
+        geom_raster(mapping=aes(fill = t_c1_fit)) + 
+        geom_contour(data = grid_t_c1_krig, mapping = aes(z=t_c1_fit), colour = "blue", 
+                               breaks = c(seq(7, 13, 2))) +  # create intervals for contour  plot
+        scale_fill_distiller(palette = "Spectral") +
+        scale_x_date(limits=c(xmin_gg,xmax_gg),
+                     date_breaks = "1 week", 
+                     date_minor_breaks = "1 day", 
+                     date_labels =  "%d/%m/%y") +
+        scale_y_reverse() +
+        geom_point(data=CTD, 
+        mapping=aes(x=date, y=p), size=0.5, color="white") +
+        ggtitle("Downcast temp c1, contour = 7, 9, 11, 13")  +
+        xlab("Date") + ylab("Depth (m)") +
+        theme(panel.border = element_rect(colour = "black") ) +
+        theme_bw(scaling_factor) +
+        labs(fill = "Temp") +    
+        theme(axis.text=element_text(size=10),
+        axis.title=element_text(size=10,face="bold"),
+        legend.title =element_text(size=10,face="bold"),
+        legend.text = element_text(size=10),        
+        title = element_text(size=10, face = "bold", hjust = 0.5))
+plot(temp)
+
+```
+
+
+#Plot 2:  
+Interpolation, this time from the surface of the ocean using IDW.
+```{r}
+library(sf)
+library(rgdal)
+library(tmap)
+library(spatstat)  # Used for the dirichlet tessellation function
+library(maptools)  # Used for conversion from SPDF to ppp
+library(raster)    # Used to clip out thiessen polygons
+library(gstat) # Use gstat's idw routine
+library(sp)    # Used for the spsample function
+```
+```{r}
+temp_data_2 <- CTD_raw %>% 
+  select(date, julian_day, time, CTD, lat, lon, p, t, t2) %>%
+  filter(p == "5") %>% #  only taking the temperature recorded at the surface of the ocean (5m depth)
+  mutate(t_mean  =  (t+t2)/2) %>%
+  select(lat, lon, t_mean)
+
+p.sf <- st_as_sf(temp_data_2, coords = c("lon", "lat"), crs = 4326) 
+p.sf  
+
+s.sp <- as(p.sf, "Spatial")
+class(s.sp)
+
+# Create an empty grid where n is the total number of cells
+grd              <- as.data.frame(spsample(s.sp, "regular", n=50000))
+names(grd)       <- c("X", "Y")
+coordinates(grd) <- c("X", "Y")
+gridded(grd)     <- TRUE  # Create SpatialPixel object
+fullgrid(grd)    <- TRUE  # Create SpatialGrid object
+
+# Add P's projection information to the empty grid
+proj4string(s.sp) <- proj4string(s.sp) # Temp fix until new proj env is adopted
+proj4string(grd) <- proj4string(s.sp)
+
+# Interpolate the grid cells using a power value of 2 (idp=2.0)
+P.idw <- gstat::idw(t_mean ~ 1, s.sp, newdata=grd, idp=2.0)
+
+# Convert to raster object
+r       <- raster(P.idw)
+
+# Plot - how to change so that the warmer temperature is in red?
+tm_shape(r) + 
+  tm_raster(n=10,palette = "RdBu", auto.palette.mapping = FALSE,
+            title="Surface temperature") + 
+  tm_shape(s.sp) + tm_dots(size=0.2) +
+  tm_legend(legend.outside=TRUE)
+```
+# Plot 3: Compare the interpolated surface temperature against temperature data collected from satellite data
+```{r}
+library(ncdf4) # package for netcdf manipulation
+library(raster) # package for raster manipulation
+library(rgdal) # package for geospatial analysis
+library(ggplot2) # package for plotting
+library(lattice)
+library(RColorBrewer)
+```
+
+#Plot SST
+```{r}
+dname <- "sst"
+nc_SST <- nc_open( here("Denise", "project", "AQUA_MODIS.20181101_20181130.L3m.MO.NSST.sst.4km.nc copy"))
+#print(nc_SST)
+```
+
+```{r}
+# get longitude and latitude
+lon <- ncvar_get(nc_SST,"lon")
+nlon <- dim(lon)
+head(lon)
+
+lat <- ncvar_get(nc_SST,"lat")
+nlat <- dim(lat)
+head(lat)
+#lat <- rev(lat) #previous error - increasing X and Y values expected. Reverse the values to make increasing lat values.
+
+print(c(nlon,nlat))
+```
+
+```{r}
+# Get temperature variable
+tmp_array <- ncvar_get(nc_SST,dname)
+dlname <- ncatt_get(nc_SST,dname,"long_name")
+dunits <- ncatt_get(nc_SST,dname,"units")
+fillvalue <- ncatt_get(nc_SST,dname,"_FillValue")
+dim(tmp_array) #verify the size of the array - same as before
+```
+
+```{r}
+# Get global attributes
+title <- ncatt_get(nc_SST,0,"title")
+institution <- ncatt_get(nc_SST,0,"institution")
+datasource <- ncatt_get(nc_SST,0,"source")
+references <- ncatt_get(nc_SST,0,"references")
+history <- ncatt_get(nc_SST,0,"history")
+Conventions <- ncatt_get(nc_SST,0,"Conventions")
+
+```
+
+```{r}
+#subset data for NZ area (coordinates lat -46 to -41, lon 172 to -176)
+lon_sub <- which( nc_SST$dim$lon$vals > 172 | nc_SST$dim$lon$vals < -176)
+lat_sub <- which( nc_SST$dim$lat$vals > -46 & nc_SST $dim$lat$vals < -41)
+lon_sub <- c(which(nc_SST$dim$lon$vals > 172) , which(nc_SST$dim$lon$vals < -176) )
+# replace netCDF fill values with NA's
+tmp_array[tmp_array==fillvalue$value] <- NA
+temp_nz <- tmp_array [lon_sub, lat_sub]
+nc_close(nc_SST)
+```
+
+```{r}
+#Check current workspace
+ls()
+```
+
+
+```{r}
+#Plot all to check data. Looks ok
+#image(lon,lat,tmp_array, col=rev(brewer.pal(10,"RdBu")))
+```
+
+```{r}
+#Plot NZ
+raster_temp_nz <- raster(temp_nz)
+raster_temp_nz <-  t(raster_temp_nz)
+plot(raster_temp_nz)
+raster_temp_nz
+```
+
+```{r}
+temp_nz_df <- as.data.frame(raster_temp_nz, xy = TRUE)
+str(temp_nz_df)
+
+#error here. The axis values are not coordinates (lat -46 to -41, lon 172 to -176). I think the way would be to create a new create a column with the coordinates, but because of the way the data is formed I'm not sure how to do. 
+#Plotting is more difficult becuase the data stretches over the dateline.
+plot_temp<- ggplot() +
+    geom_raster(data = temp_nz_df , aes(x = x, y = y, fill = layer)) +
+    scale_fill_viridis_c() +
+    coord_quickmap()+
+    theme(aspect.ratio = 3/4)
+plot_temp
+
+```
