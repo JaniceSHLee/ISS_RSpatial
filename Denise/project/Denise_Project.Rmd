@@ -225,14 +225,6 @@ tm_shape(r) +
   tm_legend(legend.outside=TRUE)
 ```
 # Plot 3: Compare the interpolated surface temperature against temperature data collected from satellite data
-```{r}
-library(ncdf4) # package for netcdf manipulation
-library(raster) # package for raster manipulation
-library(rgdal) # package for geospatial analysis
-library(ggplot2) # package for plotting
-library(lattice)
-library(RColorBrewer)
-```
 
 #Plot SST
 ```{r}
