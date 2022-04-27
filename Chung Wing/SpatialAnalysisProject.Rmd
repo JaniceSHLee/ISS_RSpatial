@@ -1,7 +1,7 @@
 ---
-title: "SpatialAnalysisProject"
+title: "Spatial Analysis Project"
 author: "Chung-Wing Ko"
-date: "4/25/2022"
+date: "25 April 2022"
 output: 
   html_document:
     toc: true
@@ -13,6 +13,14 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
+
+## Background Information
+
+My research project focuses on measuring belowground (soil and root) characteristics of the Central Catchment Nature Reserve in Singapore. I'm interested in how land use history has created these forest types, ranging from near-primary patches to secondary forests of various successional stages. The Central Catchment has not been extensively surveyed before for belowground traits, which are important to understand for future restoration efforts. Informed restoration should incorporate soil environment into tree planting and other initiatives, which may influence the success of these reforestation efforts. 
+
+My project is in collaboration with NParks, who are reestablishing 62 plots previously established in 1992 by Wong and colleagues. NParks is focusing on aboveground traits such as tree composition and understory composition, while I focus on belowground traits. For this project, I hope to interpolate soil nitrogen concentration across the lower Central Catchment, and have currently sampled 18 of the 62 plots total. 
+
+Soil nitrogen is an important nutrient for plant growth, and is hypothesised to be one of the limiting factors in plant success, alongside phosphorus. This variable is therefore of significant interest to see its relative abundance across the Central Catchment and observe any potential spatial patterns in its distribution. 
 
 ## Load Libraries and Data
 ```{r}
@@ -42,6 +50,8 @@ boundary <- st_read("/Users/chungwingko/Desktop/CCProject/Map/CCcutout.shp")
 ```
 
 ## Data Cleaning
+
+These data are various measurements collected from the 18 plots sampled thus far. Measurements of soil nitrogen must be adjusted for factors of extractant volume and soil moisture, so all data is combined and adjusted before soil nitrogen is isolated for this class project.
 
 ### Attribute Data
 ```{r}
@@ -148,7 +158,7 @@ CCProject$microbeN = (CCProject$TN.F - CCProject$TN.NF)/0.54
 
 ### Filtering Soil Nitrogen Data
 
-For this project, I'll be focusing on interpolating soil nitrogen content across the lower Central Catchment region. Therefore, I'll be using just the soil nitrogen measurements (in ppm), and all other data were used to help calculate concentrations and will not be needed. 
+For this project, I'll be focusing on interpolating soil nitrogen content across the lower Central Catchment region. Therefore, I'll be using just the soil nitrogen measurements (in ppm), and all other data were used to help calculate concentrations and will not be needed. At each plot, 5 samples were taken and analysed separately. However, locations are only known on the plot level, so will be averaged across each plot and spatially analysed on that resolution. In the future, I will get more exact GPS locations of each sampling location from NParks, and will therefore be able to interpolate on a higher spatial resolution. 
 ```{r}
 #for this project, focusing on soil nitrogen content
 attributes <- CCProject %>% dplyr::select(Plot, Direction, TN.NF) %>% drop_na()
@@ -161,7 +171,7 @@ attributes <- attributes %>% group_by(Plot) %>% summarise(N = mean(TN.NF)) #aver
 plots <- left_join(coords, attributes, by = "Plot")
 
 #clean data
-plots = dplyr::select(plots, -Plot)
+plots = dplyr::select(plots, -Plot) #dropping plot number
 plots.sf <- st_as_sf(plots, coords = c("y", "x"), crs = 4326)
 attributes(plots.sf)
 ```
@@ -336,6 +346,8 @@ tm_shape(r.m) + tm_raster(n=7, palette = "PuBu", title="95% confidence interval 
   tm_legend(legend.outside=TRUE)
 ```
 
+The confidence intervals can be interpreted as that amount higher and lower than the interpolation. Based on the IDW method, the higher uncertainties exist in the northern and western areas of the spatial extent. The lack of sampled sites in the western portion largely add to this uncertainty. 
+
 ## Polynomial Fits
 
 ### 1st Order
@@ -365,6 +377,8 @@ tm_shape(r.m) +
   tm_legend(legend.outside=TRUE)
 ```
 
+The first order polynomial shows an east-west trend in the soil nitrogen concentration, which may not necessarily be uniform (thus leading to the need for a second order analysis). 
+
 ### 2nd Order
 ```{r}
 #define polynomial equation
@@ -391,6 +405,8 @@ tm_shape(r.m) +
   tm_shape(plots.sp) + tm_dots(size=0.2) +
   tm_legend(legend.outside=TRUE)
 ```
+
+The second order polynomial shows a curvature pattern previously not shown in the first order polynomial, which seems fairly significant. 
 
 ## Kriging
 
@@ -420,9 +436,11 @@ dat.fit  <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
 plot(var.smpl, dat.fit, xlim=c(0,2.5))
 ```
 
-The default calculations for partial sill, nugget, and range are shown below. The final values used were adjusted after looking at what the pattern plotted was, and the Power model was chosen to represent the trend. 
+The cloud plot did not show a clear pattern, and there are some outliers in the variogram model, meaning the mathematical model may not be the most accurate. The default calculations for partial sill, nugget, and range are shown below. The final values used were adjusted after visual inspection, and the Exponential model was chosen to represent the trend. 
 
 ### Generate Kriged Surface
+
+This variogram model is used to provide localised weighting parameters, compared with the IDW method which uses a universal power parameter. The final kriged surface can be shown below. Similar to the polynomial fits, this also shows an east-west trend, but introduces some dynamic shifts based on these localised weights. 
 ```{r}
 #define model
 f.1 <- as.formula(N ~ x + y) 
@@ -443,6 +461,8 @@ tm_shape(r.m) +
 ```
 
 ### Variance Map
+
+This variance map allows us to visualise uncertainty in the interpolation. The highest variance can be seen in the southwestern portion of the map, which makes sense as there is a lack of sampled sites in that region. Lower variances can be observed where the plots are most tightly clustered. 
 ```{r}
 r <- raster(dat.krg, layer="var1.var")
 r.m <- mask(r, boundary.sp)
@@ -455,6 +475,8 @@ tm_shape(r.m) +
 ```
 
 ### 95% Confidence Interval Map
+
+Similarly to the variance map, the 95% CI map allows us to visualise uncertainty (interpreted as the amount above and below). The higher uncertainties are also consistently in the southwestern region of the map, for the same reasons. Interestingly, the range in confidence intervals for the Kriging method appears to be larger than when compared to the IDW method, but without understanding the maths behind the Kriging method (which is not covered here) this cannot fully be explained. 
 ```{r}
 r <- sqrt(raster(dat.krg, layer="var1.var")) * 1.96
 r.m <- mask(r, boundary.sp)
