@@ -78,7 +78,7 @@ proj4string(P) <- proj4string(P) #temp fix until new proj env is adopted
 proj4string(grd) <- proj4string(P)
 
 #interpolate the grid cells using a power value of 2 (idp=2.0)
-P.idw <- gstat::idw(Precip_in ~ 1, P, newdata=grd, idp=2.0)
+P.idw <- gstat::idw(Precip_in ~ 1, P, newdata=grd, idp=1)
 
 #convert to raster object then clip to Texas
 r <- raster(P.idw)
@@ -97,7 +97,7 @@ tm_shape(r.m) +
 #leave-one-out validation routine
 IDW.out <- vector(length = length(P))
 for (i in 1:length(P)) {
-  IDW.out[i] <- idw(Precip_in ~ 1, P[-i,], P[i,], idp=2.0)$var1.pred
+  IDW.out[i] <- idw(Precip_in ~ 1, P[-i,], P[i,], idp=4)$var1.pred
 }
 
 #plot the differences
@@ -214,7 +214,7 @@ f.1 <- as.formula(Precip_in ~ X + Y)
 #parameters passed to variogram(). This tells the function to create the 
 #variogram on the de-trended data.
 var.smpl <- variogram(f.1, P, cloud = FALSE, cutoff=1000000, width=89900)
-
+var.smpl
 #compute the variogram model by passing the nugget, sill and range values
 #to fit variogram() via the vgm() function.
 dat.fit  <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
