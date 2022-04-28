@@ -1,0 +1,489 @@
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(rgdal)
+Loading required package: sp
+Please note that rgdal will be retired by the end of 2023,
+plan transition to sf/stars/terra functions using GDAL and PROJ
+at your earliest convenience.
+
+rgdal: version: 1.5-28, (SVN revision 1158)
+Geospatial Data Abstraction Library extensions to R successfully loaded
+Loaded GDAL runtime: GDAL 3.2.3, released 2021/04/27
+Path to GDAL shared files: /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/rgdal/gdal
+GDAL binary built with GEOS: TRUE 
+Loaded PROJ runtime: Rel. 7.2.1, January 1st, 2021, [PJ_VERSION: 721]
+Path to PROJ shared files: /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/rgdal/proj
+PROJ CDN enabled: FALSE
+Linking to sp version:1.4-6
+To mute warnings of possible GDAL/OSR exportToProj4() degradation,
+use options("rgdal_show_exportToProj4_warnings"="none") before loading sp or rgdal.
+Overwritten PROJ_LIB was /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/rgdal/proj
+> library(tmap)
+> 
+> # Load precipitation data
+> z <- gzcon(url("https://github.com/mgimond/Spatial/raw/main/Data/precip.rds"))
+> P <- readRDS(z)
+> 
+> # Load Texas boudary map
+> z <- gzcon(url("https://github.com/mgimond/Spatial/raw/main/Data/texas.rds"))
+> W <- readRDS(z)
+> 
+> # Replace point boundary extent with that of Texas
+> P@bbox <- W@bbox
+> 
+> tm_shape(W) + tm_polygons() +
++     tm_shape(P) +
++     tm_dots(col="Precip_in", palette = "RdBu", auto.palette.mapping = FALSE,
++             title="Sampled precipitation \n(in inches)", size=0.7) +
++     tm_text("Precip_in", just="left", xmod=.5, size = 0.7) +
++     tm_legend(legend.outside=TRUE)
+Warning message:
+The argument auto.palette.mapping is deprecated. Please use midpoint for numeric data and stretch.palette for categorical data to control the palette mapping. 
+> library(spatstat)  # Used for the dirichlet tessellation function
+Loading required package: spatstat.data
+Loading required package: spatstat.geom
+spatstat.geom 2.3-2
+Loading required package: spatstat.random
+spatstat.random 2.1-0
+Loading required package: spatstat.core
+Loading required package: nlme
+Loading required package: rpart
+spatstat.core 2.4-0
+Loading required package: spatstat.linnet
+spatstat.linnet 2.3-2
+
+spatstat 2.3-3       (nickname: ‘That's not important right now’) 
+For an introduction to spatstat, type ‘beginner’ 
+
+> library(maptools)  # Used for conversion from SPDF to ppp
+Checking rgeos availability: FALSE
+Please note that 'maptools' will be retired by the end of 2023,
+plan transition at your earliest convenience;
+some functionality will be moved to 'sp'.
+ 	Note: when rgeos is not available, polygon geometry 	computations in maptools depend on gpclib,
+ 	which has a restricted licence. It is disabled by default;
+ 	to enable gpclib, type gpclibPermit()
+> library(raster)    # Used to clip out thiessen polygons
+
+Attaching package: ‘raster’
+
+The following object is masked from ‘package:nlme’:
+
+    getData
+
+> 
+> # Create a tessellated surface
+> th  <-  as(dirichlet(as.ppp(P)), "SpatialPolygons")
+Warning messages:
+1: In wkt(obj) : CRS object has no comment
+2: In wkt(obj) : CRS object has no comment
+> 
+> # The dirichlet function does not carry over projection information
+> # requiring that this information be added manually
+> proj4string(th) <- proj4string(P)
+> 
+> # The tessellated surface does not store attribute information
+> # from the point data layer. We'll use the over() function (from the sp
+> # package) to join the point attributes to the tesselated surface via
+> # a spatial join. The over() function creates a dataframe that will need to
+> # be added to the `th` object thus creating a SpatialPolygonsDataFrame object
+> th.z     <- over(th, P, fn=mean)
+> th.spdf  <-  SpatialPolygonsDataFrame(th, th.z)
+> 
+> # Finally, we'll clip the tessellated  surface to the Texas boundaries
+> th.clp   <- raster::intersect(W,th.spdf)
+Loading required namespace: rgeos
+Failed with error:  ‘there is no package called ‘rgeos’’
+Error in .checkGEOS() : requireNamespace("rgeos") is not TRUE
+> 
+> # Map the data
+> tm_shape(th.clp) + 
++     tm_polygons(col="Precip_in", palette="RdBu", auto.palette.mapping=FALSE,
++                 title="Predicted precipitation \n(in inches)") +
++     tm_legend(legend.outside=TRUE)
+Error in as.list.environment(environment()) : object 'th.clp' not found
+> install.packages("rgeos")
+trying URL 'https://cran.rstudio.com/bin/macosx/big-sur-arm64/contrib/4.1/rgeos_0.5-9.tgz'
+Content type 'application/x-gzip' length 11575626 bytes (11.0 MB)
+==================================================
+downloaded 11.0 MB
+
+
+The downloaded binary packages are in
+	/var/folders/nk/rz0bk_b97_dgbqx428l3xdpw0000gn/T//RtmpaYeEIJ/downloaded_packages
+> library(spatstat)  # Used for the dirichlet tessellation function
+> library(maptools)  # Used for conversion from SPDF to ppp
+> library(raster)    # Used to clip out thiessen polygons
+> 
+> # Create a tessellated surface
+> th  <-  as(dirichlet(as.ppp(P)), "SpatialPolygons")
+Warning messages:
+1: In wkt(obj) : CRS object has no comment
+2: In wkt(obj) : CRS object has no comment
+> 
+> # The dirichlet function does not carry over projection information
+> # requiring that this information be added manually
+> proj4string(th) <- proj4string(P)
+> 
+> # The tessellated surface does not store attribute information
+> # from the point data layer. We'll use the over() function (from the sp
+> # package) to join the point attributes to the tesselated surface via
+> # a spatial join. The over() function creates a dataframe that will need to
+> # be added to the `th` object thus creating a SpatialPolygonsDataFrame object
+> th.z     <- over(th, P, fn=mean)
+> th.spdf  <-  SpatialPolygonsDataFrame(th, th.z)
+> 
+> # Finally, we'll clip the tessellated  surface to the Texas boundaries
+> th.clp   <- raster::intersect(W,th.spdf)
+Loading required namespace: rgeos
+> 
+> # Map the data
+> tm_shape(th.clp) + 
++     tm_polygons(col="Precip_in", palette="RdBu", auto.palette.mapping=FALSE,
++                 title="Predicted precipitation \n(in inches)") +
++     tm_legend(legend.outside=TRUE)
+Warning message:
+The argument auto.palette.mapping is deprecated. Please use midpoint for numeric data and stretch.palette for categorical data to control the palette mapping. 
+> library(gstat) # Use gstat's idw routine
+Error in library(gstat) : there is no package called ‘gstat’
+> library(sp)    # Used for the spsample function
+> 
+> # Create an empty grid where n is the total number of cells
+> grd              <- as.data.frame(spsample(P, "regular", n=50000))
+> names(grd)       <- c("X", "Y")
+> coordinates(grd) <- c("X", "Y")
+> gridded(grd)     <- TRUE  # Create SpatialPixel object
+> fullgrid(grd)    <- TRUE  # Create SpatialGrid object
+> 
+> # Add P's projection information to the empty grid
+> proj4string(P) <- proj4string(P) # Temp fix until new proj env is adopted
+Warning messages:
+1: In wkt(obj) : CRS object has no comment
+2: In ReplProj4string(obj, CRS(value)) :
+  A new CRS was assigned to an object with an existing CRS:
++proj=eqdc +lat_0=39 +lon_0=-96 +lat_1=33 +lat_2=45 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0
+without reprojecting.
+For reprojection, use function spTransform
+> proj4string(grd) <- proj4string(P)
+Warning message:
+In proj4string(P) :
+  CRS object has comment, which is lost in output; in tests, see
+https://cran.r-project.org/web/packages/sp/vignettes/CRS_warnings.html
+> 
+> # Interpolate the grid cells using a power value of 2 (idp=2.0)
+> P.idw <- gstat::idw(Precip_in ~ 1, P, newdata=grd, idp=2.0)
+Error in loadNamespace(x) : there is no package called ‘gstat’
+> 
+> # Convert to raster object then clip to Texas
+> r       <- raster(P.idw)
+Error in h(simpleError(msg, call)) : 
+  error in evaluating the argument 'x' in selecting a method for function 'raster': object 'P.idw' not found
+> r.m     <- mask(r, W)
+Error in h(simpleError(msg, call)) : 
+  error in evaluating the argument 'x' in selecting a method for function 'mask': object 'r' not found
+> 
+> # Plot
+> tm_shape(r.m) + 
++     tm_raster(n=10,palette = "RdBu", auto.palette.mapping = FALSE,
++               title="Predicted precipitation \n(in inches)") + 
++     tm_shape(P) + tm_dots(size=0.2) +
++     tm_legend(legend.outside=TRUE)
+Error in as.list.environment(environment()) : object 'r.m' not found
+> install.packages("gstat")
+also installing the dependencies ‘xts’, ‘intervals’, ‘zoo’, ‘spacetime’, ‘FNN’
+
+trying URL 'https://cran.rstudio.com/bin/macosx/big-sur-arm64/contrib/4.1/xts_0.12.1.tgz'
+Content type 'application/x-gzip' length 940328 bytes (918 KB)
+==================================================
+downloaded 918 KB
+
+trying URL 'https://cran.rstudio.com/bin/macosx/big-sur-arm64/contrib/4.1/intervals_0.15.2.tgz'
+Content type 'application/x-gzip' length 772243 bytes (754 KB)
+==================================================
+downloaded 754 KB
+
+trying URL 'https://cran.rstudio.com/bin/macosx/big-sur-arm64/contrib/4.1/zoo_1.8-10.tgz'
+Content type 'application/x-gzip' length 1050575 bytes (1.0 MB)
+==================================================
+downloaded 1.0 MB
+
+trying URL 'https://cran.rstudio.com/bin/macosx/big-sur-arm64/contrib/4.1/spacetime_1.2-6.tgz'
+Content type 'application/x-gzip' length 2914394 bytes (2.8 MB)
+==================================================
+downloaded 2.8 MB
+
+trying URL 'https://cran.rstudio.com/bin/macosx/big-sur-arm64/contrib/4.1/FNN_1.1.3.tgz'
+Content type 'application/x-gzip' length 128086 bytes (125 KB)
+==================================================
+downloaded 125 KB
+
+trying URL 'https://cran.rstudio.com/bin/macosx/big-sur-arm64/contrib/4.1/gstat_2.0-9.tgz'
+Content type 'application/x-gzip' length 2518220 bytes (2.4 MB)
+==================================================
+downloaded 2.4 MB
+
+
+The downloaded binary packages are in
+	/var/folders/nk/rz0bk_b97_dgbqx428l3xdpw0000gn/T//RtmpaYeEIJ/downloaded_packages
+> library(gstat) # Use gstat's idw routine
+
+Attaching package: ‘gstat’
+
+The following object is masked from ‘package:spatstat.core’:
+
+    idw
+
+> library(sp)    # Used for the spsample function
+> 
+> # Create an empty grid where n is the total number of cells
+> grd              <- as.data.frame(spsample(P, "regular", n=50000))
+> names(grd)       <- c("X", "Y")
+> coordinates(grd) <- c("X", "Y")
+> gridded(grd)     <- TRUE  # Create SpatialPixel object
+> fullgrid(grd)    <- TRUE  # Create SpatialGrid object
+> 
+> # Add P's projection information to the empty grid
+> proj4string(P) <- proj4string(P) # Temp fix until new proj env is adopted
+Warning messages:
+1: In proj4string(P) :
+  CRS object has comment, which is lost in output; in tests, see
+https://cran.r-project.org/web/packages/sp/vignettes/CRS_warnings.html
+2: In proj4string(obj) :
+  CRS object has comment, which is lost in output; in tests, see
+https://cran.r-project.org/web/packages/sp/vignettes/CRS_warnings.html
+> proj4string(grd) <- proj4string(P)
+Warning message:
+In proj4string(P) :
+  CRS object has comment, which is lost in output; in tests, see
+https://cran.r-project.org/web/packages/sp/vignettes/CRS_warnings.html
+> 
+> # Interpolate the grid cells using a power value of 2 (idp=2.0)
+> P.idw <- gstat::idw(Precip_in ~ 1, P, newdata=grd, idp=2.0)
+[inverse distance weighted interpolation]
+> 
+> # Convert to raster object then clip to Texas
+> r       <- raster(P.idw)
+> r.m     <- mask(r, W)
+> 
+> # Plot
+> tm_shape(r.m) + 
++     tm_raster(n=10,palette = "RdBu", auto.palette.mapping = FALSE,
++               title="Predicted precipitation \n(in inches)") + 
++     tm_shape(P) + tm_dots(size=0.2) +
++     tm_legend(legend.outside=TRUE)
+Warning message:
+The argument auto.palette.mapping is deprecated. Please use midpoint for numeric data and stretch.palette for categorical data to control the palette mapping. 
+> # Leave-one-out validation routine
+> IDW.out <- vector(length = length(P))
+> for (i in 1:length(P)) {
++     IDW.out[i] <- idw(Precip_in ~ 1, P[-i,], P[i,], idp=2.0)$var1.pred
++ }
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+> 
+> # Plot the differences
+> OP <- par(pty="s", mar=c(4,3,0,0))
+> plot(IDW.out ~ P$Precip_in, asp=1, xlab="Observed", ylab="Predicted", pch=16,
++      col=rgb(0,0,0,0.5))
+> abline(lm(IDW.out ~ P$Precip_in), col="red", lw=2,lty=2)
+> abline(0,1)
+> par(OP)
+> # Compute RMSE
+> sqrt( sum((IDW.out - P$Precip_in)^2) / length(P))
+[1] 6.989294
+> # Implementation of a jackknife technique to estimate 
+> # a confidence interval at each unsampled point.
+> 
+> # Create the interpolated surface
+> img <- gstat::idw(Precip_in~1, P, newdata=grd, idp=2.0)
+[inverse distance weighted interpolation]
+> n   <- length(P)
+> Zi  <- matrix(nrow = length(img$var1.pred), ncol = n)
+> 
+> # Remove a point then interpolate (do this n times for each point)
+> st <- stack()
+> for (i in 1:n){
++     Z1 <- gstat::idw(Precip_in~1, P[-i,], newdata=grd, idp=2.0)
++     st <- addLayer(st,raster(Z1,layer=1))
++     # Calculated pseudo-value Z at j
++     Zi[,i] <- n * img$var1.pred - (n-1) * Z1$var1.pred
++ }
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+[inverse distance weighted interpolation]
+> 
+> # Jackknife estimator of parameter Z at location j
+> Zj <- as.matrix(apply(Zi, 1, sum, na.rm=T) / n )
+> 
+> # Compute (Zi* - Zj)^2
+> c1 <- apply(Zi,2,'-',Zj)            # Compute the difference
+> c1 <- apply(c1^2, 1, sum, na.rm=T ) # Sum the square of the difference
+> 
+> # Compute the confidence interval
+> CI <- sqrt( 1/(n*(n-1)) * c1)
+> 
+> # Create (CI / interpolated value) raster
+> img.sig   <- img
+> img.sig$v <- CI /img$var1.pred 
+> 
+> # Clip the confidence raster to Texas
+> r <- raster(img.sig, layer="v")
+> r.m <- mask(r, W)
+> 
+> # Plot the map
+> tm_shape(r.m) + tm_raster(n=7,title="95% confidence interval \n(in inches)") +
++     tm_shape(P) + tm_dots(size=0.2) +
++     tm_legend(legend.outside=TRUE)
+> # Define the 1st order polynomial equation
+> f.1 <- as.formula(Precip_in ~ X + Y) 
+> 
+> # Add X and Y to P
+> P$X <- coordinates(P)[,1]
+> P$Y <- coordinates(P)[,2]
+> 
+> # Run the regression model
+> lm.1 <- lm( f.1, data=P)
+> 
+> # Use the regression model output to interpolate the surface
+> dat.1st <- SpatialGridDataFrame(grd, data.frame(var1.pred = predict(lm.1, newdata=grd))) 
+> 
+> # Clip the interpolated raster to Texas
+> r   <- raster(dat.1st)
+> r.m <- mask(r, W)
+> 
+> # Plot the map
+> tm_shape(r.m) + 
++     tm_raster(n=10, palette="RdBu", auto.palette.mapping=FALSE, 
++               title="Predicted precipitation \n(in inches)") +
++     tm_shape(P) + tm_dots(size=0.2) +
++     tm_legend(legend.outside=TRUE)
+Warning message:
+The argument auto.palette.mapping is deprecated. Please use midpoint for numeric data and stretch.palette for categorical data to control the palette mapping. 
+> # Define the 2nd order polynomial equation
+> f.2 <- as.formula(Precip_in ~ X + Y + I(X*X)+I(Y*Y) + I(X*Y))
+> 
+> # Add X and Y to P
+> P$X <- coordinates(P)[,1]
+> P$Y <- coordinates(P)[,2]
+> 
+> # Run the regression model
+> lm.2 <- lm( f.2, data=P)
+> 
+> # Use the regression model output to interpolate the surface
+> dat.2nd <- SpatialGridDataFrame(grd, data.frame(var1.pred = predict(lm.2, newdata=grd))) 
+> 
+> # Clip the interpolated raster to Texas
+> r   <- raster(dat.2nd)
+> r.m <- mask(r, W)
+> 
+> # Plot the map
+> tm_shape(r.m) + 
++     tm_raster(n=10, palette="RdBu", auto.palette.mapping=FALSE,
++               title="Predicted precipitation \n(in inches)") +
++     tm_shape(P) + tm_dots(size=0.2) +
++     tm_legend(legend.outside=TRUE)
+Warning message:
+The argument auto.palette.mapping is deprecated. Please use midpoint for numeric data and stretch.palette for categorical data to control the palette mapping. 
+> # Define the 1st order polynomial equation
+> f.1 <- as.formula(Precip_in ~ X + Y) 
+> 
+> # Compute the sample variogram; note that the f.1 trend model is one of the
+> # parameters passed to variogram(). This tells the function to create the 
+> # variogram on the de-trended data.
+> var.smpl <- variogram(f.1, P, cloud = FALSE, cutoff=1000000, width=89900)
+> 
+> # Compute the variogram model by passing the nugget, sill and range values
+> # to fit.variogram() via the vgm() function.
+> dat.fit  <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
++                           vgm(psill=14, model="Sph", range=590000, nugget=0))
+> 
+> # The following plot allows us to assess the fit
+> plot(var.smpl, dat.fit, xlim=c(0,1000000))
+> # Define the trend model
+> f.1 <- as.formula(Precip_in ~ X + Y) 
+> 
+> # Perform the krige interpolation (note the use of the variogram model
+> # created in the earlier step)
+> dat.krg <- krige( f.1, P, grd, dat.fit)
+[using universal kriging]
+> 
+> # Convert kriged surface to a raster object for clipping
+> r <- raster(dat.krg)
+> r.m <- mask(r, W)
+> 
+> # Plot the map
+> tm_shape(r.m) + 
++     tm_raster(n=10, palette="RdBu", auto.palette.mapping=FALSE, 
++               title="Predicted precipitation \n(in inches)") +
++     tm_shape(P) + tm_dots(size=0.2) +
++     tm_legend(legend.outside=TRUE)
+Warning message:
+The argument auto.palette.mapping is deprecated. Please use midpoint for numeric data and stretch.palette for categorical data to control the palette mapping. 
+> r   <- raster(dat.krg, layer="var1.var")
+> r.m <- mask(r, W)
+> 
+> tm_shape(r.m) + 
++     tm_raster(n=7, palette ="Reds",
++               title="Variance map \n(in squared inches)") +tm_shape(P) + tm_dots(size=0.2) +
++     tm_legend(legend.outside=TRUE)
+> r   <- sqrt(raster(dat.krg, layer="var1.var")) * 1.96
+> r.m <- mask(r, W)
+> 
+> tm_shape(r.m) + 
++     tm_raster(n=7, palette ="Reds",
++               title="95% CI map \n(in inches)") +tm_shape(P) + tm_dots(size=0.2) +
++     tm_legend(legend.outside=TRUE)
