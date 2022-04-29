@@ -1,0 +1,91 @@
+# PACKAGES (not all used in end code - tried lots of ways but data not viable)
+
+library(raster)
+library(maptools)
+library(gstat)
+library(geoR)
+library(fields)
+library(knitr)
+library(rmdformats)
+library(here)
+library(ggplot2)
+library(dplyr)
+library(readxl)
+library(lubridate)
+library(ncdf4)
+library(lattice)
+library(RColorBrewer)
+library(sf)
+library(rgdal)
+library(tmap)
+library(classInt)
+library(spatstat)
+library(sp)
+library(mapview)
+library(spdep)
+
+#INITIAL TRANSFORMATION
+
+SAMPLES_DATA <- readxl::read_excel(here("Desktop", 
+                                        "Work", 
+                                        "PhD", 
+                                        "Modules", 
+                                        "ES7015_-_SPATIAL_ANALYSIS_IN_R", 
+                                        "Project", 
+                                        "metapr2_datasets", 
+                                        "samples.xlsx"))
+
+SAMPLES_DATA_CSV <- read.csv("Desktop/Work/Phd/Modules/ES7015_-_SPATIAL_ANALYSIS_IN_R/Project/metapr2_datasets/samples.csv")
+
+SAMPLES_DATA
+
+SAMPLES_DATA_CSV
+
+# CSV MAPPING
+
+mapview(SAMPLES_DATA_CSV, 
+        xcol = "longitude", 
+        ycol = "latitude", 
+        crs = 4269, 
+        grid = FALSE)
+
+# FILTERING CSV SAMPLES
+
+SAMPLES_DATA_CSV_FILTERED <- SAMPLES_DATA_CSV  %>% filter(substrate_type == "water", 
+                                                          DNA_RNA == "DNA", 
+                                                          depth_level == "surface", 
+                                                          substrate == "water")
+
+SAMPLES_DATA_CSV_FILTERED_FRACTION_PICO <- SAMPLES_DATA_CSV_FILTERED %>% filter(fraction_name == "pico")
+
+SAMPLES_DATA_CSV_FILTERED_FRACTION_TOTAL <- SAMPLES_DATA_CSV_FILTERED %>% filter(fraction_name == "total")
+
+# SF TRANSFORMATION
+
+SAMPLES_DATA_SF_FILTERED <- st_as_sf(SAMPLES_DATA_CSV_FILTERED, 
+                                     coords = c("longitude", "latitude"),  
+                                     crs = 4326)
+
+SAMPLES_DATA_SF_FILTERED_FRACTION_PICO <- st_as_sf(SAMPLES_DATA_CSV_FILTERED_FRACTION_PICO, 
+                                                   coords = c("longitude", "latitude"),  
+                                                   crs = 4326)
+
+SAMPLES_DATA_SF_FILTERED_FRACTION_TOTAL <- st_as_sf(SAMPLES_DATA_CSV_FILTERED_FRACTION_TOTAL, 
+                                                    coords = c("longitude", "latitude"),  
+                                                    crs = 4326)
+
+# SF MAPPING
+
+mapview(SAMPLES_DATA_SF_FILTERED, 
+        map.types = "Stamen.Toner")
+
+mapview(SAMPLES_DATA_SF_FILTERED_FRACTION_PICO, 
+        map.types = "Stamen.Toner")
+
+mapview(SAMPLES_DATA_SF_FILTERED_FRACTION_TOTAL, 
+        map.types = "Stamen.Toner")
+
+mapview(list(SAMPLES_DATA_SF_FILTERED_FRACTION_PICO,SAMPLES_DATA_SF_FILTERED_FRACTION_TOTAL),
+        col.regions=list("red","blue"),
+        col=list("red","blue"), 
+        map.types = "Stamen.Toner")
